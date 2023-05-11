@@ -118,7 +118,9 @@
     "typescript": "lerna run tsc",
     "unit": "jest --testPathIgnorePatterns a11y",
     "update-internal-dependencies": "node scripts/update-internal-dependencies.js",
-    "link-local": "lerna link"
+    "link-local": "lerna link",
+    "link-global": "lerna exec --parallel yarn link",
+    "unlink-global": "lerna exec --parallel --bail=false yarn unlink"
   },
   "eslintConfig": {
     "extends": [

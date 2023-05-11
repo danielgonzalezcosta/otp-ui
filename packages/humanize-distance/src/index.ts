@@ -62,9 +62,10 @@ export function humanizeDistanceStringMetric(
 export function humanizeDistanceString(
   meters: number,
   outputMetricUnits = false,
+  abbreviate = false,
   intl?: IntlShape
 ): string {
   return outputMetricUnits
     ? humanizeDistanceStringMetric(meters, intl)
-    : humanizeDistanceStringImperial(meters, null, intl);
+    : humanizeDistanceStringImperial(meters, abbreviate, intl);
 }

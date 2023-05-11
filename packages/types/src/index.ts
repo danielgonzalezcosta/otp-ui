@@ -147,6 +147,11 @@ export type Config = {
     /** @deprecated */
     longDateFormat?: string;
   };
+  localization: {
+    currency: string;
+    defaultLocale: string;
+    useMetricUnits: boolean;
+  };
   homeTimezone: string;
   /** @deprecated */
   modes?: ConfiguredModes;

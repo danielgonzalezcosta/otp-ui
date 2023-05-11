@@ -1,5 +1,6 @@
 import flatten from "flat";
 import { IntlShape } from "react-intl";
+import { humanizeDistanceString } from "@opentripplanner/humanize-distance";
 
 // eslint-disable-next-line prettier/prettier
 import type { CustomQueryParameters } from "../types";
@@ -54,8 +55,15 @@ function getDurationOptions(intl, minuteOptions) {
 /**
  * Gets a list of distance options in miles.
  */
-function getDistanceOptionsInMiles(intl, mileOptions) {
+function getDistanceOptions(intl, useMetricUnits, kilometerOptions, mileOptions) {
   // intl is needed because <FormattedMessage> can't be used inside <option>.
+  if (useMetricUnits) {
+    return kilometerOptions.map(meters => ({
+      text: humanizeDistanceString(meters, true, true, intl),
+      value: meters
+    }));
+  }
+
   return mileOptions.map(miles => ({
     text: intl.formatMessage(
       {
@@ -78,7 +86,23 @@ function getDistanceOptionsInMiles(intl, mileOptions) {
 /**
  * Gets a list of speed options in miles per hour.
  */
-function getSpeedOptionsInMilesPerHour(intl, milesPerHourOptions) {
+function getSpeedOptions(intl, useMetricUnits, kilometersPerHourOptions, milesPerHourOptions) {
+  if (useMetricUnits) {
+    return kilometersPerHourOptions.map(kmh => ({
+      text: intl.formatMessage(
+          {
+            defaultMessage: `${kmh} km/h`,
+            description: "Displays a speed in kilometers per hour",
+            id: "otpUi.queryParameters.speedInKilometersPerHour"
+          },
+          {
+            kmh
+          }
+      ),
+      value: kmh
+    }));
+  }
+
   // intl is needed because <FormattedMessage> can't be used inside <option>.
   return milesPerHourOptions.map(mph => ({
     text: intl.formatMessage(
@@ -136,7 +160,8 @@ function getBikeTripOptions(intl) {
  * Obtains a set of custom query parameters with localized labels and options.
  */
 export function getQueryParamMessagesWithI18n(
-  intl: IntlShape
+  intl: IntlShape,
+  useMetricUnits: boolean
 ): CustomQueryParameters {
   return {
     maxWalkDistance: {
@@ -145,7 +170,7 @@ export function getQueryParamMessagesWithI18n(
         description: "Max walk distance label",
         id: "otpUi.queryParameters.maxWalkDistance"
       }),
-      options: getDistanceOptionsInMiles(intl, [0.1, 0.25, 0.5, 0.75, 1, 2, 5])
+      options: getDistanceOptions(intl, useMetricUnits, [250, 500, 1000, 2000, 5000], [0.1, 0.25, 0.5, 0.75, 1, 2, 5])
     },
     walkReluctance: {
       label: intl.formatMessage({
@@ -171,18 +196,12 @@ export function getQueryParamMessagesWithI18n(
         description: "Max bike distance label",
         id: "otpUi.queryParameters.maxBikeDistance"
       }),
-      options: getDistanceOptionsInMiles(intl, [
-        0.25,
-        0.5,
-        0.75,
-        1,
-        2,
-        3,
-        5,
-        10,
-        20,
-        30
-      ])
+      options: getDistanceOptions(
+          intl,
+          useMetricUnits,
+          [500, 1000, 2000, 5000, 10000, 15000, 20000, 30000, 40000, 50000],
+          [0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 20, 30]
+      )
     },
     optimizeBike: {
       label: intl.formatMessage({
@@ -206,7 +225,7 @@ export function getQueryParamMessagesWithI18n(
         description: "Max walk speed label",
         id: "otpUi.queryParameters.walkSpeed"
       }),
-      options: getSpeedOptionsInMilesPerHour(intl, [2, 3, 4])
+      options: getSpeedOptions(intl, useMetricUnits, [3, 5, 7], [2, 3, 4])
     },
     maxBikeTime: {
       label: intl.formatMessage({
@@ -222,7 +241,7 @@ export function getQueryParamMessagesWithI18n(
         description: "Bike speed selector label",
         id: "otpUi.queryParameters.bikeSpeed"
       }),
-      options: getSpeedOptionsInMilesPerHour(intl, [6, 8, 10, 12])
+      options: getSpeedOptions(intl, useMetricUnits, [10, 15, 20], [6, 8, 10, 12])
     },
     maxEScooterDistance: {
       label: intl.formatMessage({
@@ -230,18 +249,11 @@ export function getQueryParamMessagesWithI18n(
         description: "Max e-scooter distance label",
         id: "otpUi.queryParameters.maxEScooterDistance"
       }),
-      options: getDistanceOptionsInMiles(intl, [
-        0.25,
-        0.5,
-        0.75,
-        1,
-        2,
-        3,
-        5,
-        10,
-        20,
-        30
-      ])
+      options: getDistanceOptions(
+          intl, useMetricUnits,
+          [500, 1000, 2000, 5000, 10000, 15000, 20000, 30000, 40000, 50000],
+          [0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 20, 30]
+      )
     },
     watts: {
       label: intl.formatMessage({

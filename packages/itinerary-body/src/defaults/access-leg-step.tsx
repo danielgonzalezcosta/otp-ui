@@ -11,6 +11,7 @@ import StreetName from "./street-name";
 
 interface Props extends HTMLAttributes<HTMLSpanElement> {
   step: Step;
+  useMetricUnits: boolean;
 }
 
 /**
@@ -19,7 +20,8 @@ interface Props extends HTMLAttributes<HTMLSpanElement> {
 export default function AccessLegStep({
   className,
   step,
-  style
+  style,
+  useMetricUnits
 }: Props): ReactElement {
   const { absoluteDirection, relativeDirection, streetName } = step;
   const intl = useIntl();
@@ -73,10 +75,9 @@ export default function AccessLegStep({
     // for styled-components support.
     <span className={className} style={style}>
       {stepContent}
-      {/* TODO: Implement metric vs imperial (up until now it's just imperial). */}
       {step?.distance && (
         <S.StepLength>
-          {humanizeDistanceString(step.distance, false, intl)}
+          {humanizeDistanceString(step.distance, useMetricUnits, false, intl)}
         </S.StepLength>
       )}
     </span>

@@ -98,8 +98,12 @@ export default function AccessLegDescription({
           description="Summarizes an access leg, including distance"
           id="otpUi.AccessLegBody.summaryAndDistance"
           values={{
-            // TODO: Implement metric vs imperial (up until now it's just imperial).
-            distance: humanizeDistanceString(leg.distance, false, intl),
+            distance: humanizeDistanceString(
+              leg.distance,
+              config?.localization?.useMetricUnits,
+              false,
+              intl
+            ),
             mode: modeContent,
             place: placeContent
           }}

@@ -79,6 +79,10 @@ interface SettingsSelectorPanelProps {
    * Supported modes that will be displayed as primary, secondary, tertiary options.
    */
   supportedModes: ConfiguredModes;
+  /**
+   * If true, metric units should be used for distance and speed.
+   */
+  useMetricUnits: boolean;
 }
 
 function getSelectedCompanies(queryParams: QueryParams) {
@@ -106,7 +110,8 @@ export default function SettingsSelectorPanel({
   queryParamMessages = null,
   style = null,
   supportedCompanies = [],
-  supportedModes = null
+  supportedModes = null,
+  useMetricUnits = false
 }: SettingsSelectorPanelProps): ReactElement {
   const [defaultAccessModeCompany, setDefaultAccessModeCompany] = useState(
     null
@@ -209,7 +214,7 @@ export default function SettingsSelectorPanel({
 
   const intl = useIntl();
   const queryParamMessagesWithI18nAndCustomizations = {
-    ...getQueryParamMessagesWithI18n(intl),
+    ...getQueryParamMessagesWithI18n(intl, useMetricUnits),
     ...queryParamMessages
   };
 

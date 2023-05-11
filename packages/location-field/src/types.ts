@@ -258,6 +258,10 @@ export interface LocationFieldProps {
    */
   suppressNearby?: boolean;
   /**
+   * If true, distances will use metric units instead of imperial.
+   */
+  useMetricUnits?: boolean;
+  /**
    * A custom component for rendering the icon for options that are either saved
    * user locations or recent places. The component will be sent a single prop
    * of `userLocation` which is a userLocationType.

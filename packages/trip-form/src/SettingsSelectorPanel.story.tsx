@@ -108,6 +108,7 @@ const SettingsPanelTemplate = (args: StoryArgs, context: StoryContext) => {
           args.supportedModes ||
           (globals.locale === "en-US" ? commonModesEnglish : commonModesFrench)
         }
+        useMetricUnits={false}
       />
     </PanelWrapper>
   );

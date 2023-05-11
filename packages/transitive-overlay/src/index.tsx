@@ -87,11 +87,13 @@ const accessLegFilter = [
 
 type Props = {
   activeLeg?: Leg;
+  disableFlexArc: boolean;
   transitiveData?: TransitiveData;
 };
 
 const TransitiveCanvasOverlay = ({
   activeLeg,
+  disableFlexArc,
   transitiveData
 }: Props): JSX.Element => {
   const { current: map } = useMap();
@@ -175,7 +177,11 @@ const TransitiveCanvasOverlay = ({
           ...(
             transitiveData.patterns || []
           ).flatMap((pattern: TransitivePattern) =>
-            patternToRouteFeature(pattern, transitiveData.routes)
+            patternToRouteFeature(
+              disableFlexArc,
+              pattern,
+              transitiveData.routes
+            )
           )
         ]
       : []

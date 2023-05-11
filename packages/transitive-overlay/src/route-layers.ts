@@ -13,6 +13,7 @@ import distance from "@turf/distance";
  * Create a labeled-line feature for the given transit route pattern.
  */
 export function patternToRouteFeature(
+  disableFlexArc: boolean,
   pattern: TransitivePattern,
   routes: TransitiveRoute[]
 ): GeoJSON.Feature<GeoJSON.Geometry, Record<string, unknown>> {
@@ -54,7 +55,7 @@ export function patternToRouteFeature(
   const straight = polyline.toGeoJSON(polyline.encode(concatenatedLines));
 
   // TODO: add a second condition for TNC routes to also be drawn as arcs
-  if (isFlex) {
+  if (isFlex && !disableFlexArc) {
     // Create clone of plain route that only includes first and last point
     straight.coordinates = [
       straight.coordinates[0],

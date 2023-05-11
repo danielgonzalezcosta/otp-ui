@@ -101,6 +101,7 @@
     "build:esm": "lerna exec --parallel -- cross-env BABEL_ENV=esm babel --extensions '.js,.ts,.tsx' --ignore **/*.story.js,**/*.story.ts,**/*.story.d.ts,**/*.story.tsx,**/*.spec.js,**/*.spec.ts,**/*.test.js,**/*.test.ts,**/__tests__/**,**/__unpublished__/** --root-mode upward --source-maps true src -d esm",
     "check:i18n-all": "node packages/scripts/lib/run-validate-i18n.js packages/**/src packages/**/i18n",
     "check:i18n-en-fr": "node packages/scripts/lib/run-validate-i18n.js packages/**/src packages/**/i18n/en-US.yml packages/**/i18n/fr.yml",
+    "clean": "lerna clean && lerna exec --parallel -- rm -rf lib esm tsconfig.tsbuildinfo",
     "prepublish": "yarn typescript && yarn build:cjs && yarn build:esm",
     "check-eslint-config": "eslint --print-config jestconfig.js | eslint-config-prettier-check",
     "coverage": "jest --coverage",

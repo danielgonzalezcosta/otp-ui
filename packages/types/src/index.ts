@@ -437,6 +437,7 @@ export type Location = {
   lat: number;
   lon: number;
   name?: string;
+  stopId?: string;
   /**
    * This is only used location that a user has saved. Can be either:
    * One of: 'home', 'work', 'stop' or 'recent'

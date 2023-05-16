@@ -28,7 +28,7 @@ const generateLocation = (entity: Entity, name: string) => {
   const lon = entityLon || x
   if (!lat || !lon) return null
 
-  return { lat, lon, name };
+  return { lat, lon, name, stopId: entity.id };
 }
 
 const StationHubDetails = ({ station }: { station: Station }) => {

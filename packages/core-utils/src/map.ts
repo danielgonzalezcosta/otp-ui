@@ -22,8 +22,14 @@ export function coordsToString(coords: number[]): string {
   return coords.length && coords.map(c => (+c).toFixed(5)).join(", ");
 }
 
-export function stringToCoords(str: string): number[] {
-  return (str && str.split(",").map(c => +c)) || [];
+export function stringToCoordsAndId(
+  str: string
+): [] | [number, number] | [number, number, string] {
+  if (!str) return [];
+
+  const parts = str.split(/[,;]/);
+  if (parts.length !== 2 && parts.length !== 3) return [];
+  return [+parts[0], +parts[1], parts[2]];
 }
 
 export function constructLocation(latlng: {

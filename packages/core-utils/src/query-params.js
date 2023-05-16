@@ -66,7 +66,9 @@ export function formatPlace(location, alternateName) {
       location.lon
     })`;
   // This string is not language-specific
-  return `${name}::${location.lat},${location.lon}`;
+  return `${name}::${location.lat},${location.lon}${
+    location.stopId ? `;${location.stopId}` : ""
+  }`;
 }
 
 // Load stored default query settings from local storage

@@ -25,12 +25,12 @@ type InputPreferred = {
 type OTPQueryParams = {
   arriveBy: boolean;
   date?: string;
-  from: LonLatOutput & { name?: string };
+  from: LonLatOutput & { name?: string; stopId?: string };
   modes: TransportMode[];
   modeSettings: ModeSetting[];
   time?: string;
   numItineraries?: number;
-  to: LonLatOutput & { name?: string };
+  to: LonLatOutput & { name?: string; stopId?: string };
   banned?: InputBanned;
   preferred?: InputPreferred;
 };
@@ -231,12 +231,16 @@ export function generateOtp2Query({
       bikeReluctance,
       carReluctance,
       date,
-      fromPlace: `${from.name}::${from.lat},${from.lon}}`,
+      fromPlace: `${from.name}::${from.lat},${from.lon}${
+        from.stopId ? `;${from.stopId}` : ""
+      }`,
       modes,
       numItineraries,
       preferred,
       time,
-      toPlace: `${to.name}::${to.lat},${to.lon}}`,
+      toPlace: `${to.name}::${to.lat},${to.lon}${
+        to.stopId ? `;${to.stopId}` : ""
+      }`,
       walkReluctance,
       wheelchair
     }

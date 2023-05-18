@@ -74,6 +74,7 @@ export type SingleGeocoderResponse = {
   lat: number;
   lon: number;
   name: string;
+  stopId?: string;
   rawGeocodedFeature: Feature;
 };
 

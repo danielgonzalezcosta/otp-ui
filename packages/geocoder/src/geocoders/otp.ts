@@ -24,10 +24,10 @@ export default class OTPGeocoder extends Geocoder {
     return {
         features: response?.results?.map(stop => ({
             geometry: { type: "Point", coordinates: [stop.lng, stop.lat] },
-            id: stop.id, 
+            id: stop.id,
             // TODO: if non-stops are supported, these need to be detected here and 
             // this layer property updated accordingly
-            properties: { layer: "stops", source: "otp", name: stop.description, label: stop.description }, 
+            properties: { layer: "stops", source: "otp", name: stop.description, label: stop.description, stopId: stop.id },
             type: "Feature"
         })),
       type: "FeatureCollection"

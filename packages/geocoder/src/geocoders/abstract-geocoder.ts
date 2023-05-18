@@ -56,6 +56,7 @@ export default class Geocoder {
       const location: SingleGeocoderResponse = {
         ...fromCoordinates(feature.geometry.coordinates),
         name: feature.properties.label,
+        stopId: feature.properties.stopId,
         rawGeocodedFeature: feature
       };
       return Promise.resolve(location);

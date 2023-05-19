@@ -98,6 +98,10 @@ export interface TripDetailsProps {
     [name: string]: string;
   };
   /**
+   * Should the total trip distance be display in metric units.
+   */
+  useMetricUnits?: boolean;
+  /**
    * Itinerary that the user has selected to view, contains multiple legs.
    */
   itinerary: Itinerary;

@@ -1,13 +1,15 @@
 import flatten from "flat";
 import coreUtils from "@opentripplanner/core-utils";
 import React, { ReactElement } from "react";
-import { FormattedMessage, FormattedNumber } from "react-intl";
+import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
 import { CalendarAlt } from "@styled-icons/fa-solid/CalendarAlt";
 import { Heartbeat } from "@styled-icons/fa-solid/Heartbeat";
 import { MoneyBillAlt } from "@styled-icons/fa-solid/MoneyBillAlt";
 import { Leaf } from "@styled-icons/fa-solid/Leaf";
 import { Route } from "@styled-icons/fa-solid/Route";
 
+import { Ruler } from "@styled-icons/fa-solid";
+import { humanizeDistanceString } from "@opentripplanner/humanize-distance";
 import * as S from "./styled";
 import TripDetail from "./trip-detail";
 import FareLegTable from "./fare-table";
@@ -116,6 +118,7 @@ export function TripDetails({
   FareDetails = null,
   fareDetailsLayout,
   fareKeyNameMap = {},
+  useMetricUnits,
   itinerary,
   TimeActiveDetails = DefaultTimeActiveDetails
 }: TripDetailsProps): ReactElement {
@@ -225,6 +228,18 @@ export function TripDetails({
   const walkMinutes = Math.round(walkDurationSeconds / 60);
   const minutesActive = bikeMinutes + walkMinutes;
 
+  const intl = useIntl();
+  const totalTripDistance = itinerary.legs
+    .filter(leg => typeof leg.distance === "number")
+    .map(leg => leg.distance)
+    .reduce((prev, current) => prev + current, 0);
+  const formattedTotalTripDistance = humanizeDistanceString(
+    totalTripDistance,
+    useMetricUnits,
+    false,
+    intl
+  );
+
   // Calculate CO₂ if it's not provided by the itinerary
   const co2 =
     itinerary.co2 ||
@@ -281,6 +296,26 @@ export function TripDetails({
             </S.Timing>
           }
         />
+        {totalTripDistance > 0 && (
+          <TripDetail
+            icon={<Ruler size={17} />}
+            summary={
+              <S.Timing>
+                <FormattedMessage
+                  defaultMessage={
+                    defaultMessages["otpUi.TripDetails.totalDistance"]
+                  }
+                  description="Text showing the total distance for a trip."
+                  id="otpUi.TripDetails.totalDistance"
+                  values={{
+                    totalTripDistance: formattedTotalTripDistance,
+                    strong: boldText
+                  }}
+                />
+              </S.Timing>
+            }
+          />
+        )}
         {fare && (
           <TripDetail
             // Any custom description for the transit fare needs to be handled by the slot.

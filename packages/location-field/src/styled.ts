@@ -59,8 +59,6 @@ export const Input = styled.input`
 
 export const InputGroup = styled.div`
   border-bottom: 1px solid #000;
-  border-collapse: separate;
-  display: table;
   margin-bottom: 15px;
   position: relative;
 `;

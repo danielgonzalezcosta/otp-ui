@@ -1,15 +1,23 @@
 // Prettier does not support typescript annotation
 // eslint-disable-next-line prettier/prettier
-import type { AutocompleteQuery, MultiGeocoderResponse } from "./types";
+import type { AutocompleteQuery, GeocoderConfig, MultiGeocoderResponse, ReverseQuery, SearchQuery, SingleGeocoderResponse } from "./types";
 
-import Geocoder from "./abstract-geocoder";
+import Geocoder, { GeocoderAPI } from "./abstract-geocoder";
 import { OTPGeocoderResponse } from "../apis/otp";
+import NoApiGeocoder from "./noapi";
 
 /**
  * Allows fetching results from OTP instance with the geocoder endpoint enabled
  */
 export default class OTPGeocoder extends Geocoder {
-  getAutocompleteQuery(query: AutocompleteQuery): AutocompleteQuery {
+    private noapi: Geocoder;
+
+    constructor(geocoderApi: GeocoderAPI, geocoderConfig: GeocoderConfig) {
+        super(geocoderApi, geocoderConfig);
+        this.noapi = new NoApiGeocoder(geocoderApi, geocoderConfig);
+    }
+
+    getAutocompleteQuery(query: AutocompleteQuery): AutocompleteQuery {
     const {
       baseUrl,
     } = this.geocoderConfig;
@@ -18,7 +26,6 @@ export default class OTPGeocoder extends Geocoder {
       ...query
     };
   }
-
 
   rewriteAutocompleteResponse(response: OTPGeocoderResponse): MultiGeocoderResponse {
     return {
@@ -34,4 +41,11 @@ export default class OTPGeocoder extends Geocoder {
     };
   }
 
+  search(query: SearchQuery): Promise<MultiGeocoderResponse> {
+      return this.noapi.search(query);
+  }
+
+  reverse(query: ReverseQuery): Promise<MultiGeocoderResponse | SingleGeocoderResponse> {
+      return this.noapi.reverse(query);
+  }
 }

@@ -8,7 +8,7 @@ import type { GeocoderConfig, ReverseQuery, AutocompleteQuery, SearchQuery, Mult
 /**
  * The exact format of the Geocoder response depends on the specific geocoder implementation
  */
-type GeocoderAPI = {
+export type GeocoderAPI = {
   autocomplete: (query: AutocompleteQuery) => Promise<unknown>;
   reverse: (query: ReverseQuery) => Promise<unknown>;
   search: (query: SearchQuery) => Promise<unknown>;

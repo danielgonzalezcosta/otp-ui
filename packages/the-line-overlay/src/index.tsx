@@ -93,81 +93,6 @@ export default function TheLineOverlay({
 
   const layers = [];
 
-  if (showStopsAndStations) {
-    layers.push(
-      new MVTLayer({
-        id: `${id}-tiles-bg` as string,
-        data: tileUrl,
-
-        minZoom: 6,
-        maxZoom: 19,
-        pickable: true,
-
-        pointType: "circle",
-
-        stroked: true,
-        filled: true,
-        getFillColor: [0, 0, 0, 255],
-        pointBillboard: false,
-        pointRadiusUnits: "pixels",
-        uniqueIdProperty: "gtfsId",
-
-        autoHighlight: true,
-        highlightColor: [100, 0, 0, 255],
-        getPointRadius: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return iconMapping["super station"].height / 2;
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return iconMapping.station.height / 2;
-          }
-          return iconMapping.stop.height / 2;
-        },
-
-        getText: feature => feature.properties.name
-      })
-    );
-    layers.push(
-      new MVTLayer({
-        id: `${id}-tiles-fg` as string,
-        data: tileUrl,
-
-        minZoom: 6,
-        maxZoom: 19,
-        pickable: false,
-
-        pointType: "icon",
-
-        visible: true,
-        iconBillboard: false,
-        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
-        iconMapping,
-        iconSizeUnits: "pixels",
-        iconSizeScale: 1,
-        iconSizeMinPixels: 10,
-        iconSizeMaxPixels: 100,
-        getIconSize: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return iconMapping["super station"].height;
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return iconMapping.station.height;
-          }
-          return iconMapping.stop.height;
-        },
-        getIcon: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return "super station";
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return "station";
-          }
-          return "stop";
-        }
-      })
-    );
-  }
-
   if (showTheLine) {
     layers.push(
       new GeoJsonLayer({
@@ -176,7 +101,7 @@ export default function TheLineOverlay({
         stroked: true,
         filled: true,
         pickable: true,
-        visible: !farOut,
+        visible: false && !farOut,
         pointType: "circle",
         getPointRadius: 50,
         getLineColor: [0, 0, 0],
@@ -250,6 +175,92 @@ export default function TheLineOverlay({
         getFillColor: [225, 225, 225, 64],
         onDataLoad: (value: any) => {
           value.features = value.features.filter(v => v.properties.building);
+        }
+      })
+    );
+  }
+
+  if (showStopsAndStations) {
+    layers.push(
+      new MVTLayer({
+        id: `${id}-tiles-bg` as string,
+        data: tileUrl,
+
+        minZoom: 6,
+        maxZoom: 19,
+        pickable: true,
+
+        pointType: "circle",
+
+        stroked: true,
+        filled: true,
+        getFillColor: [0, 0, 0, 255],
+        pointBillboard: false,
+        pointRadiusUnits: "pixels",
+        uniqueIdProperty: "gtfsId",
+
+        autoHighlight: true,
+        highlightColor: [100, 0, 0, 255],
+        getPointRadius: feature => {
+          if (feature.properties.stationLevel >= 2) {
+            return iconMapping["super station"].height / 2;
+          }
+          if (feature.properties.stationLevel >= 1) {
+            return iconMapping.station.height / 2;
+          }
+          return iconMapping.stop.height / 2;
+        },
+        parameters: {
+          depthTest: false
+        },
+
+        getText: feature => feature.properties.name
+      })
+    );
+    layers.push(
+      new MVTLayer({
+        id: `${id}-tiles-fg` as string,
+        data: tileUrl,
+
+        minZoom: 6,
+        maxZoom: 19,
+        pickable: false,
+
+        pointType: "icon",
+        parameters: {
+          depthTest: false
+        },
+
+        visible: true,
+        iconBillboard: false,
+        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
+        iconMapping,
+        iconSizeUnits: "pixels",
+        iconSizeScale: 1,
+        iconSizeMinPixels: 10,
+        iconSizeMaxPixels: 100,
+        getIconSize: feature => {
+          if (feature.properties.stationLevel >= 2) {
+            return iconMapping["super station"].height;
+          }
+          if (feature.properties.stationLevel >= 1) {
+            return iconMapping.station.height;
+          }
+          return iconMapping.stop.height;
+        },
+        getIcon: feature => {
+          if (feature.properties.stationLevel >= 2) {
+            return "super station";
+          }
+          if (feature.properties.stationLevel >= 1) {
+            return "station";
+          }
+          return "stop";
+        },
+        getElevation: feature => {
+          return !fromAbove && feature.properties.name.contains("Vertibase")
+            ? 500
+            : 0;
         }
       })
     );

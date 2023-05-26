@@ -247,11 +247,6 @@ export default function TheLineOverlay({
         getIcon: feature => {
           return classifyFeature(feature);
         },
-        getElevation: feature => {
-          return !fromAbove && feature.properties.name.contains("Vertibase")
-            ? 500
-            : 0;
-        },
 
         getText: feature =>
           classifyFeature(feature) === "stop"

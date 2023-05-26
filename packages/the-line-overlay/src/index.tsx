@@ -69,6 +69,8 @@ export default function TheLineOverlay({
   setViewedStop,
   tilesBaseUrl,
   otp2Layers,
+  itinerary,
+  pending,
   dataUrl,
   showStopsAndStations,
   showTheLine,
@@ -82,6 +84,8 @@ export default function TheLineOverlay({
   dataUrl: string;
   showStopsAndStations?: boolean;
   showTheLine?: boolean;
+  itinerary: any;
+  pending: any;
   /**
    * A method fired when a stop is selected as from or to in the default popup. If this method
    * is not passed, the from/to buttons will not be shown.
@@ -228,7 +232,7 @@ export default function TheLineOverlay({
         maxZoom: 19,
         pickable: false,
 
-        pointType: "icon+text",
+        pointType: itinerary || pending ? "icon" : "icon+text",
         parameters: {
           depthTest: false
         },

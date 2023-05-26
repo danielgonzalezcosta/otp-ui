@@ -53,6 +53,16 @@ const iconMapping = {
   }
 };
 
+function classifyFeature(feature): "super station" | "station" | "stop" {
+  if (feature.properties.stationLevel >= 2) {
+    return "super station";
+  }
+  if (feature.properties.stationLevel >= 1) {
+    return "station";
+  }
+  return "stop";
+}
+
 export default function TheLineOverlay({
   id,
   setLocation,
@@ -202,19 +212,11 @@ export default function TheLineOverlay({
         autoHighlight: true,
         highlightColor: [100, 0, 0, 255],
         getPointRadius: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return iconMapping["super station"].height / 2;
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return iconMapping.station.height / 2;
-          }
-          return iconMapping.stop.height / 2;
+          return iconMapping[classifyFeature(feature)].height / 2;
         },
         parameters: {
           depthTest: false
-        },
-
-        getText: feature => feature.properties.name
+        }
       })
     );
     layers.push(
@@ -226,7 +228,7 @@ export default function TheLineOverlay({
         maxZoom: 19,
         pickable: false,
 
-        pointType: "icon",
+        pointType: "icon+text",
         parameters: {
           depthTest: false
         },
@@ -240,27 +242,45 @@ export default function TheLineOverlay({
         iconSizeMinPixels: 10,
         iconSizeMaxPixels: 100,
         getIconSize: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return iconMapping["super station"].height;
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return iconMapping.station.height;
-          }
-          return iconMapping.stop.height;
+          return iconMapping[classifyFeature(feature)].height;
         },
         getIcon: feature => {
-          if (feature.properties.stationLevel >= 2) {
-            return "super station";
-          }
-          if (feature.properties.stationLevel >= 1) {
-            return "station";
-          }
-          return "stop";
+          return classifyFeature(feature);
         },
         getElevation: feature => {
           return !fromAbove && feature.properties.name.contains("Vertibase")
             ? 500
             : 0;
+        },
+
+        getText: feature =>
+          classifyFeature(feature) === "stop"
+            ? feature.properties.name
+            : feature.properties.name.toUpperCase(),
+        getTextAnchor: feature =>
+          classifyFeature(feature) === "super station" ? "middle" : "end",
+        getTextAlignmentBaseline: feature =>
+          classifyFeature(feature) === "super station" ? "top" : "center",
+        getTextPixelOffset: feature =>
+          classifyFeature(feature) === "super station"
+            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 10]
+            : [-(iconMapping[classifyFeature(feature)].width / 2) - 4, 0],
+        getTextSize: feature =>
+          classifyFeature(feature) === "super station" ? 14 : 10,
+        getTextColor: feature =>
+          classifyFeature(feature) === "super station"
+            ? [0, 0, 0, 255]
+            : [255, 255, 255, 255],
+        getTextBackgroundColor: feature =>
+          classifyFeature(feature) === "super station"
+            ? [255, 255, 255, 255]
+            : [0, 0, 0, 32],
+        textBackgroundPadding: [4, 4, 4, 4],
+        textBackground: true,
+        textFontWeight: "bold",
+        textFontSettings: {
+          fontSize: 32,
+          sdf: true
         }
       })
     );

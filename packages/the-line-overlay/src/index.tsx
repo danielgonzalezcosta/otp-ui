@@ -103,6 +103,8 @@ export default function TheLineOverlay({
 
   const layers = [];
 
+  const highlightColor = [255, 207, 77];
+
   if (showTheLine) {
     layers.push(
       new GeoJsonLayer({
@@ -142,7 +144,7 @@ export default function TheLineOverlay({
         getLineWidth: 4,
         getFillColor: [0, 0, 0, 0],
         autoHighlight: true,
-        highlightColor: [100, 0, 0, 128],
+        highlightColor: [...highlightColor, 128],
         onDataLoad: (value: any) => {
           value.features = value.features.filter(
             v => v.properties.module && v.properties.level
@@ -158,7 +160,7 @@ export default function TheLineOverlay({
         wireframe: !fromAbove,
         pickable: farOut || fromAbove,
         autoHighlight: true,
-        highlightColor: [100, 0, 0, 255],
+        highlightColor: [...highlightColor, fromAbove ? 255 : 128],
         lineWidthUnits: "pixels",
         getElevation: f => (fromAbove ? 0 : f.properties.height),
         getLineColor: [0, 0, 0, 196],
@@ -210,16 +212,14 @@ export default function TheLineOverlay({
         uniqueIdProperty: "gtfsId",
 
         autoHighlight: true,
-        highlightColor: [100, 0, 0, 255],
+        highlightColor: [...highlightColor, 255],
         getPointRadius: feature => {
           return iconMapping[classifyFeature(feature)].height / 2;
         },
         parameters: {
           depthTest: false
         }
-      })
-    );
-    layers.push(
+      }),
       new MVTLayer({
         id: `${id}-tiles-fg` as string,
         data: tileUrl,

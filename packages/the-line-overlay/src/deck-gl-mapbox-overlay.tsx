@@ -39,10 +39,11 @@ export class DeckGlMapboxOverlay extends MapboxOverlay {
     const prefix = "_";
     const viewState = this.map[`${prefix}_deck`].props.viewState;
     if (this.onViewStateChange && viewState) {
+      const oldViewState = this.viewState;
       const newViewState = {
         viewState,
-        oldViewState: this.viewState,
         interactionState: {},
+        oldViewState,
         viewId: ""
       };
       this.viewState = newViewState;

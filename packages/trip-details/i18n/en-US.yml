@@ -26,7 +26,7 @@ otpUi:
       plural, one {# minute} other {# minutes}}</strong> biking.
     title: Trip Details
     tncFare: "{companies} Fare: <strong>{minTNCFare} - {maxTNCFare}</strong>"
-    totalDistance: "Total Distance: {totalTripDistance}"
+    totalDistance: Distance <strong>{totalTripDistance}</strong>
     transferDiscountExplanation: Transfer discount of {transferAmount} is applied
     transitFare: Transit Fare
     transitFareEntry: "{name}: <strong>{value}</strong>"

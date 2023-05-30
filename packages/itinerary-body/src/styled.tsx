@@ -249,7 +249,7 @@ export const ItineraryBody = styled.ol`
 `;
 
 export const LegBody = styled.div`
-  color: #676767;
+  color: #fff;
   font-size: 13px;
   padding-bottom: 12px;
 `;
@@ -459,6 +459,7 @@ export const PlaceName = styled.span`
   text-overflow: ellipsis;
   flex: 1 1 auto;
   padding: 3px 0 10px 0;
+  color: #fff;
 `;
 
 export const PlaceSubheader = styled.div`

@@ -2,13 +2,13 @@ import flatten from "flat";
 import coreUtils from "@opentripplanner/core-utils";
 import React, { ReactElement } from "react";
 import { FormattedMessage, FormattedNumber, useIntl } from "react-intl";
-import { CalendarAlt } from "@styled-icons/fa-solid/CalendarAlt";
+// import { CalendarAlt } from "@styled-icons/fa-solid/CalendarAlt";
 import { Heartbeat } from "@styled-icons/fa-solid/Heartbeat";
 import { MoneyBillAlt } from "@styled-icons/fa-solid/MoneyBillAlt";
-import { Leaf } from "@styled-icons/fa-solid/Leaf";
+// import { Leaf } from "@styled-icons/fa-solid/Leaf";
 import { Route } from "@styled-icons/fa-solid/Route";
 
-import { Ruler } from "@styled-icons/fa-solid";
+// import { Ruler } from "@styled-icons/fa-solid";
 import { humanizeDistanceString } from "@opentripplanner/humanize-distance";
 import * as S from "./styled";
 import TripDetail from "./trip-detail";
@@ -118,7 +118,6 @@ export function TripDetails({
   FareDetails = null,
   fareDetailsLayout,
   fareKeyNameMap = {},
-  useMetricUnits,
   itinerary,
   TimeActiveDetails = DefaultTimeActiveDetails
 }: TripDetailsProps): ReactElement {
@@ -228,18 +227,6 @@ export function TripDetails({
   const walkMinutes = Math.round(walkDurationSeconds / 60);
   const minutesActive = bikeMinutes + walkMinutes;
 
-  const intl = useIntl();
-  const totalTripDistance = itinerary.legs
-    .filter(leg => typeof leg.distance === "number")
-    .map(leg => leg.distance)
-    .reduce((prev, current) => prev + current, 0);
-  const formattedTotalTripDistance = humanizeDistanceString(
-    totalTripDistance,
-    useMetricUnits,
-    false,
-    intl
-  );
-
   // Calculate CO₂ if it's not provided by the itinerary
   const co2 =
     itinerary.co2 ||
@@ -273,7 +260,7 @@ export function TripDetails({
           id="otpUi.TripDetails.title"
         />
       </S.TripDetailsHeader>
-      <S.TripDetailsBody>
+      <S.TripDetailsBody className="trip-details-body">
         <TripDetail
           // Any custom description for the Departure message needs to be handled by the slot.
           description={
@@ -281,9 +268,8 @@ export function TripDetails({
               <DepartureDetails departureDate={departureDate} />
             )
           }
-          icon={<CalendarAlt size={17} />}
           summary={
-            <S.Timing>
+            <S.Timing className="trip-details-time">
               <FormattedMessage
                 defaultMessage={defaultMessages["otpUi.TripDetails.departure"]}
                 description="Text showing the departure date/time for a trip."
@@ -296,26 +282,7 @@ export function TripDetails({
             </S.Timing>
           }
         />
-        {totalTripDistance > 0 && (
-          <TripDetail
-            icon={<Ruler size={17} />}
-            summary={
-              <S.Timing>
-                <FormattedMessage
-                  defaultMessage={
-                    defaultMessages["otpUi.TripDetails.totalDistance"]
-                  }
-                  description="Text showing the total distance for a trip."
-                  id="otpUi.TripDetails.totalDistance"
-                  values={{
-                    totalTripDistance: formattedTotalTripDistance,
-                    strong: boldText
-                  }}
-                />
-              </S.Timing>
-            }
-          />
-        )}
+
         {fare && (
           <TripDetail
             // Any custom description for the transit fare needs to be handled by the slot.
@@ -328,39 +295,12 @@ export function TripDetails({
                 />
               )
             }
-            icon={<MoneyBillAlt size={17} />}
             summary={fare}
           />
         )}
-        {displayTimeActive && minutesActive > 0 && (
-          <TripDetail
-            icon={<Heartbeat size={17} />}
-            summary={
-              <FormattedMessage
-                defaultMessage={
-                  defaultMessages["otpUi.TripDetails.minutesActive"]
-                }
-                description="Text showing the number of minutes spent walking or biking throughout trip."
-                id="otpUi.TripDetails.minutesActive"
-                values={{
-                  minutes: minutesActive,
-                  strong: boldText
-                }}
-              />
-            }
-            description={
-              TimeActiveDetails && (
-                <TimeActiveDetails
-                  bikeMinutes={bikeMinutes}
-                  walkMinutes={walkMinutes}
-                />
-              )
-            }
-          />
-        )}
+
         {co2 > 0 && co2Config?.enabled && (
           <TripDetail
-            icon={<Leaf size={17} />}
             summary={
               <S.CO2Summary>
                 <FormattedMessage
@@ -395,30 +335,6 @@ export function TripDetails({
                 }}
               />
             }
-          />
-        )}
-        {containsFlex && (
-          <TripDetail
-            summary={
-              <S.FlexSummary>
-                <FormattedMessage
-                  defaultMessage={
-                    defaultMessages["otpUi.TripDetails.tripIncludesFlex"]
-                  }
-                  description="Text stating that portions of the trip include a flex (on-demand) transit service."
-                  id="otpUi.TripDetails.tripIncludesFlex"
-                  values={{
-                    extraMessage: [
-                      ...new Set([
-                        ...pickupBookingInfo.map(info => info.message),
-                        ...dropOffBookingInfo.map(info => info.message)
-                      ])
-                    ].join(" ")
-                  }}
-                />
-              </S.FlexSummary>
-            }
-            icon={<Route size={17} />}
           />
         )}
       </S.TripDetailsBody>

@@ -3,7 +3,7 @@ import { MapLocationActionArg } from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useState } from "react"
 import { Popup, useControl } from "react-map-gl";
-import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer, TextLayer } from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
 import turfCentroid from "@turf/centroid";
@@ -27,12 +27,12 @@ const iconAtlas = `
         height="64px"
         width="128px"
 >
-    <circle cx="32" cy="32" r="16" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="32" stroke-opacity="0.5"/>
+    <circle cx="32" cy="32" r="16" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="32" stroke-opacity="0.3"/>
 
+    <circle cx="85" cy="21" r="16" fill="none" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="10"/>
     <circle cx="85" cy="21" r="6" fill="#FFFFFF" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="10"/>
-    <circle cx="85" cy="21" r="16" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="10"/>
 
-    <circle cx="72" cy="56" r="7" stroke="#FFFFFF" stroke-width="2" fill="#FFFFFF" fill-opacity="0.1"/>
+    <circle cx="72" cy="56" r="7" stroke="#FFFFFF" stroke-width="1" fill="#FFFFFF" fill-opacity="0.1"/>
 </svg>
 `;
 
@@ -207,6 +207,24 @@ export default function TheLineOverlay({
         onDataLoad: (value: any) => {
           value.features = value.features.filter(v => v.properties.building);
         }
+      }),
+      new TextLayer({
+        id: "biglabels",
+        data: "../biglabels.json",
+        background: true,
+        backgroundPadding: [20, 8, 20, 8],
+        fontFamily: "Brown-Regular",
+        getAlignmentBaseline: "center",
+        getAngle: 0,
+        getColor: [0, 0, 0],
+        getPosition: d => d.coordinates,
+        getSize: 16,
+        getText: d => d.name,
+        getTextAnchor: "middle",
+        sizeScale: 1,
+        pickable: false,
+        visible: true
+        // wrapLongitude: false,
       })
     );
   }
@@ -323,12 +341,13 @@ export default function TheLineOverlay({
             ? [255, 255, 255, 255]
             : [0, 0, 0, 32];
         },
-        textBackgroundPadding: [4, 4, 4, 4],
+        textBackgroundPadding: [20, 8, 20, 8],
         textBackground: true,
-        textFontWeight: "bold",
+        textFontFamily: "Brown-Regular",
         textFontSettings: {
           fontSize: 32,
-          sdf: true
+          sdf: true,
+          fontFamily: "Brown-Regular"
         }
       })
     );

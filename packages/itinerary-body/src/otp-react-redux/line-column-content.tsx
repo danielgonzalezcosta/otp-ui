@@ -93,7 +93,7 @@ const legLineBackgroundColor = ({ leg, routeColor }: LegLineProps): string => {
   return leg.transitLeg || coreUtils.itinerary.isTransit(mode)
     ? routeColor
       ? `#${routeColor}`
-      : "#000088"
+      : "#ff6749"
     : undefined;
 };
 

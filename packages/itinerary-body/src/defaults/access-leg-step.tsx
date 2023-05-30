@@ -75,7 +75,7 @@ export default function AccessLegStep({
     // for styled-components support.
     <span className={className} style={style}>
       {stepContent}
-      {step?.distance && (
+      {step?.distance > 0 && (
         <S.StepLength>
           {humanizeDistanceString(step.distance, useMetricUnits, false, intl)}
         </S.StepLength>

@@ -62,6 +62,7 @@ function makeFromToPlace(place: Place, id: "from" | "to"): TransitivePlace {
     place_lat: place.lat,
     place_lon: place.lon,
     place_name: place.name,
+    place_stopId: place.stopId,
     type: id
   };
 }

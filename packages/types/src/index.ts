@@ -519,6 +519,7 @@ export type TransitivePlace = {
   place_lat?: number;
   place_lon?: number;
   place_name?: string;
+  place_stopId?: string;
   placeId?: string;
   type: string;
 };

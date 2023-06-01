@@ -1,8 +1,7 @@
-import EntityPopup from "@opentripplanner/map-popup";
 import { MapLocationActionArg } from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useState } from "react"
-import { Popup, useControl } from "react-map-gl";
+import { useControl } from "react-map-gl";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
@@ -73,7 +72,6 @@ function classifyFeature(feature): "super station" | "station" | "stop" {
 export default function TheLineOverlay({
   id,
   setLocation,
-  setViewedStop,
   tilesBaseUrl,
   otp2Layers,
   itinerary,
@@ -107,7 +105,6 @@ export default function TheLineOverlay({
   visible?: boolean;
 }): JSX.Element {
   const [hoveredEntityId, setHoveredEntityId] = useState<string>(null);
-  const [clickedEntity, setClickedEntity] = useState<any>(null);
   const [farOut, setFarOut] = useState<boolean>(false);
   const [fromAbove, setFromAbove] = useState<boolean>(false);
 
@@ -116,6 +113,10 @@ export default function TheLineOverlay({
   const layers: any[] = [];
 
   const highlightColor = [255, 207, 77];
+
+  /* Only allow picking if there isn't an itinerary visible */
+  const allowPicking = true;
+  const allowClicking = !pending && !itinerary;
 
   if (showTheLine) {
     layers.push(
@@ -142,7 +143,7 @@ export default function TheLineOverlay({
         },
         stroked: true,
         filled: true,
-        pickable: true,
+        pickable: allowPicking,
         visible: !farOut && !fromAbove,
         getLineColor: [0, 0, 0, 128],
         getLineWidth: 4,
@@ -169,7 +170,7 @@ export default function TheLineOverlay({
         extruded: !fromAbove,
         filled: farOut || fromAbove,
         wireframe: !fromAbove,
-        pickable: farOut || fromAbove,
+        pickable: allowPicking && (farOut || fromAbove),
         lineWidthUnits: "pixels",
         getElevation: f => (fromAbove ? 0 : f.properties.height),
         getLineColor: [0, 0, 0, 196],
@@ -244,7 +245,7 @@ export default function TheLineOverlay({
         minZoom: 6,
         maxZoom: 19,
         visible: true,
-        pickable: true,
+        pickable: allowPicking,
 
         pointType: "icon",
         parameters: {
@@ -354,18 +355,18 @@ export default function TheLineOverlay({
   }
 
   const onClick = useCallback((info: PickingInfo) => {
-    if (info && info.object) {
+    if (allowClicking && info && info.object) {
       const centroid = turfCentroid(info.object);
-      const entity = {
-        id: info.object.properties.gtfsId,
-        name: info.object.properties.name,
-        lon: centroid.geometry.coordinates[0],
-        lat: centroid.geometry.coordinates[1],
-        popupLon: info.coordinate[0],
-        popupLat: info.coordinate[1]
-      };
 
-      setClickedEntity(entity);
+      setLocation({
+        locationType: "automatic",
+        location: {
+          name: info.object.properties.name,
+          stopId: info.object.properties.gtfsId,
+          lon: centroid.geometry.coordinates[0],
+          lat: centroid.geometry.coordinates[1]
+        }
+      });
     }
   }, []);
 
@@ -383,7 +384,7 @@ export default function TheLineOverlay({
   }
 
   function getCursor({ isHovering }): string {
-    return isHovering ? "pointer" : "";
+    return isHovering && allowClicking ? "pointer" : "";
   }
 
   return (
@@ -399,27 +400,6 @@ export default function TheLineOverlay({
         alwaysShow={alwaysShow}
         visible={visible}
       />
-      {clickedEntity && (
-        <Popup
-          latitude={clickedEntity.popupLat}
-          longitude={clickedEntity.popupLon}
-          maxWidth="100%"
-          onClose={() => setClickedEntity(null)}
-        >
-          <EntityPopup
-            entity={{ ...clickedEntity, id: clickedEntity.id }}
-            setLocation={
-              setLocation
-                ? location => {
-                    setClickedEntity(null);
-                    setLocation(location);
-                  }
-                : null
-            }
-            setViewedStop={setViewedStop}
-          />
-        </Popup>
-      )}
     </>
   );
 }

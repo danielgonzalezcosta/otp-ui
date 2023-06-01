@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import coreUtils from "@opentripplanner/core-utils";
 import getGeocoder from "@opentripplanner/geocoder";
 // @ts-ignore Not Typescripted Yet
 import LocationIcon from "@opentripplanner/location-icon";
 import { Location } from "@opentripplanner/types";
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { FormattedList, FormattedMessage, useIntl } from "react-intl";
-import { Ban } from "@styled-icons/fa-solid/Ban";
 import { Bus } from "@styled-icons/fa-solid/Bus";
 import { ExclamationCircle } from "@styled-icons/fa-solid/ExclamationCircle";
-import { LocationArrow } from "@styled-icons/fa-solid/LocationArrow";
 import { Search } from "@styled-icons/fa-solid/Search";
 import { Times } from "@styled-icons/fa-solid/Times";
 import { debounce } from "throttle-debounce";
@@ -26,7 +23,6 @@ import {
 import * as S from "./styled";
 import { LocationFieldProps, ResultType } from "./types";
 import {
-  addInParentheses,
   generateLabel,
   getCombinedLabel,
   getGeocoderErrorMessage
@@ -133,12 +129,9 @@ const LocationField = ({
   clearButtonIcon = <Times size={ICON_SIZE} />,
   clearLocation = () => {},
   currentPosition = null,
-  currentPositionIcon = <LocationArrow size={ICON_SIZE} />,
-  currentPositionUnavailableIcon = <Ban size={ICON_SIZE} />,
   findNearbyStops = () => {},
   GeocodedOptionIconComponent = GeocodedOptionIcon,
   geocoderConfig,
-  getCurrentPosition,
   hideExistingValue = false,
   initialSearchResults = null,
   inputPlaceholder = null,
@@ -339,25 +332,6 @@ const LocationField = ({
       locationType,
       resultType
     });
-    setMenuVisible(false);
-  };
-
-  const useCurrentLocation = () => {
-    const newLocation = coreUtils.map.currentPositionToLocation(
-      currentPosition
-    );
-    if (newLocation) {
-      // If geolocation is successful (i.e., user has granted app geolocation
-      // permission and coords exist), set location.
-      onLocationSelected({
-        location: newLocation,
-        locationType,
-        resultType: "CURRENT_LOCATION"
-      });
-    } else {
-      // Call geolocation.getCurrentPosition and set as from/to locationType
-      getCurrentPosition(intl, locationType);
-    }
     setMenuVisible(false);
   };
 
@@ -760,57 +734,6 @@ const LocationField = ({
     );
   }
 
-  /* 4) Process the current location */
-  let locationSelected;
-  let optionIcon;
-  let optionTitle;
-  let positionUnavailable;
-
-  if (currentPosition && !currentPosition.error) {
-    // current position detected successfully
-    locationSelected = useCurrentLocation;
-    optionIcon = currentPositionIcon;
-    optionTitle = intl.formatMessage({
-      id: "otpUi.LocationField.useCurrentLocation"
-    });
-    positionUnavailable = false;
-  } else {
-    // Error detecting current position.
-    // If there is an error, concatenate the error message in parentheses.
-    optionIcon = currentPositionUnavailableIcon;
-    const locationUnavailableText = intl.formatMessage({
-      description: "Current location unavailable status",
-      id: "otpUi.LocationField.currentLocationUnavailable"
-    });
-    const errorText = !currentPosition
-      ? undefined
-      : typeof currentPosition.error === "string"
-      ? currentPosition.error
-      : currentPosition.error.message;
-
-    optionTitle = addInParentheses(intl, locationUnavailableText, errorText);
-    positionUnavailable = true;
-    statusMessages.push(optionTitle);
-  }
-
-  // Add to the selection handler lookup (for use in onKeyDown)
-  locationSelectedLookup[itemIndex] = locationSelected;
-
-  if (!suppressNearby) {
-    // Create and add the option item to the menu items array
-    menuItems.push(
-      <Option
-        disabled={positionUnavailable}
-        icon={optionIcon}
-        id={getOptionId(itemIndex)}
-        isActive={itemIndex === activeIndex}
-        key={optionKey++}
-        onClick={locationSelected}
-        title={optionTitle}
-      />
-    );
-    if (!positionUnavailable) itemIndex++;
-  }
   if (message) {
     if (geocodedFeatures.length === 0) {
       const icon = isFetching ? (
@@ -922,7 +845,7 @@ const LocationField = ({
           })}
           id={listBoxId}
         >
-          {isStatic ? (
+          {isStatic || (menuItems.length === 0 && menuVisible) ? (
             menuItems.length > 0 ? ( // Show typing prompt to avoid empty screen
               menuItems
             ) : (

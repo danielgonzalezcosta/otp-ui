@@ -1,4 +1,4 @@
-import { MapLocationActionArg } from "@opentripplanner/types";
+import { Itinerary, MapLocationActionArg } from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useState } from "react"
 import { useControl } from "react-map-gl";
@@ -75,7 +75,6 @@ export default function TheLineOverlay({
   tilesBaseUrl,
   otp2Layers,
   itinerary,
-  pending,
   dataUrl,
   showStopsAndStations,
   showTheLine,
@@ -89,7 +88,7 @@ export default function TheLineOverlay({
   dataUrl: string;
   showStopsAndStations?: boolean;
   showTheLine?: boolean;
-  itinerary: any;
+  itinerary: Itinerary;
   pending: any;
   /**
    * A method fired when a stop is selected as from or to in the default popup. If this method
@@ -116,7 +115,8 @@ export default function TheLineOverlay({
 
   /* Only allow picking if there isn't an itinerary visible */
   const allowPicking = true;
-  const allowClicking = !pending && !itinerary;
+  const allowClicking = !itinerary;
+  const opaqueLayer = !!itinerary;
 
   if (showTheLine) {
     layers.push(
@@ -139,7 +139,7 @@ export default function TheLineOverlay({
         id: `${id}-geojson-level` as string,
         data: `${dataUrl}?v=2` as string,
         updateTriggers: {
-          getFillColor: [hoveredEntityId]
+          getFillColor: [allowClicking, hoveredEntityId]
         },
         stroked: true,
         filled: true,
@@ -148,7 +148,7 @@ export default function TheLineOverlay({
         getLineColor: [0, 0, 0, 128],
         getLineWidth: 4,
         getFillColor: feature => {
-          if (feature.properties.gtfsId === hoveredEntityId) {
+          if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
             return [...highlightColor, 128] as [number, number, number, number];
           }
           return [0, 0, 0, 0];
@@ -164,7 +164,7 @@ export default function TheLineOverlay({
         data: `${dataUrl}?v=1.1` as string,
         updateTriggers: {
           getElevation: [fromAbove],
-          getFillColor: [fromAbove, hoveredEntityId]
+          getFillColor: [allowClicking, fromAbove, hoveredEntityId]
         },
         stroked: fromAbove && !farOut,
         extruded: !fromAbove,
@@ -176,7 +176,7 @@ export default function TheLineOverlay({
         getLineColor: [0, 0, 0, 196],
         getLineWidth: 3,
         getFillColor: feature => {
-          if (feature.properties.gtfsId === hoveredEntityId) {
+          if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
             return [...highlightColor, fromAbove ? 255 : 128] as [
               number,
               number,
@@ -236,10 +236,7 @@ export default function TheLineOverlay({
         id: `${id}-tiles-icons` as string,
         data: tileUrl,
         updateTriggers: {
-          getIconColor: [!!itinerary, !!pending, hoveredEntityId],
-          getText: [!!itinerary, !!pending, hoveredEntityId],
-          getTextColor: [!!itinerary, !!pending, hoveredEntityId],
-          getTextBackgroundColor: [!!itinerary, !!pending, hoveredEntityId]
+          getIconColor: [opaqueLayer, hoveredEntityId]
         },
 
         minZoom: 6,
@@ -268,7 +265,7 @@ export default function TheLineOverlay({
           if (feature.properties.gtfsId === hoveredEntityId) {
             return highlightColor;
           }
-          return [255, 255, 255, itinerary || pending ? 64 : 255];
+          return [255, 255, 255, opaqueLayer ? 64 : 255];
         }
       }),
 
@@ -276,10 +273,8 @@ export default function TheLineOverlay({
         id: `${id}-tiles-labels` as string,
         data: tileUrl,
         updateTriggers: {
-          getIconColor: [!!itinerary, !!pending, hoveredEntityId],
-          getText: [!!itinerary, !!pending, hoveredEntityId],
-          getTextColor: [!!itinerary, !!pending, hoveredEntityId],
-          getTextBackgroundColor: [!!itinerary, !!pending, hoveredEntityId]
+          getTextColor: [opaqueLayer, hoveredEntityId],
+          getTextBackgroundColor: [opaqueLayer, hoveredEntityId]
         },
 
         minZoom: 6,
@@ -307,10 +302,7 @@ export default function TheLineOverlay({
         getTextSize: feature =>
           classifyFeature(feature) === "super station" ? 14 : 10,
         getTextColor: feature => {
-          if (
-            feature.properties.gtfsId !== hoveredEntityId &&
-            (itinerary || pending)
-          ) {
+          if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
           }
 
@@ -325,10 +317,7 @@ export default function TheLineOverlay({
             : [255, 255, 255, 255];
         },
         getTextBackgroundColor: feature => {
-          if (
-            feature.properties.gtfsId !== hoveredEntityId &&
-            (itinerary || pending)
-          ) {
+          if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
           }
 

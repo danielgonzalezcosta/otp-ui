@@ -1,5 +1,6 @@
 otpUi:
   TripDetails:
+    averageSpeed: Average Speed <strong>{averageSpeedInKmh} km/h</strong>
     co2: "CO₂ Emitted: <strong>{co2}</strong>"
     co2description: >-
       CO₂ intensity is calculated by multiplying the distance of each leg of a
@@ -27,6 +28,7 @@ otpUi:
     title: Trip Details
     tncFare: "{companies} Fare: <strong>{minTNCFare} - {maxTNCFare}</strong>"
     totalDistance: Distance <strong>{totalTripDistance}</strong>
+    totalDuration: Duration <strong>{minutes} min</strong>
     transferDiscountExplanation: Transfer discount of {transferAmount} is applied
     transitFare: Transit Fare
     transitFareEntry: "{name}: <strong>{value}</strong>"

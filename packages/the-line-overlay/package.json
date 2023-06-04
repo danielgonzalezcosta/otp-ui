@@ -25,7 +25,9 @@
     "@deck.gl/mapbox": "^8.9.15",
     "@deck.gl/mesh-layers": "^8.9.15",
     "@opentripplanner/map-popup": "^2.0.3",
-    "@turf/centroid": "^6.5.0"
+    "@turf/along": "^6.5.0",
+    "@turf/centroid": "^6.5.0",
+    "@turf/line-slice-along": "^6.5.0"
   },
   "devDependencies": {
     "@opentripplanner/base-map": "^3.0.11",

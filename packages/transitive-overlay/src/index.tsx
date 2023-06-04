@@ -7,8 +7,7 @@ import {
   Leg,
   TransitiveData,
   TransitiveJourney,
-  TransitivePattern,
-  TransitivePlace
+  TransitivePattern
 } from "@opentripplanner/types";
 import bbox from "@turf/bbox";
 
@@ -98,24 +97,7 @@ const TransitiveCanvasOverlay = ({
 }: Props): JSX.Element => {
   const { current: map } = useMap();
 
-  const placeFeatures = (
-    (transitiveData && transitiveData.places) ||
-    []
-  ).flatMap((place: TransitivePlace) => {
-    return {
-      type: "Feature",
-      properties: {
-        color: modeColorMap[place.type] || "#008",
-        name: place.place_name,
-        stopId: place.place_stopId,
-        type: place.type || "place"
-      },
-      geometry: {
-        type: "Point",
-        coordinates: [place.place_lon, place.place_lat]
-      }
-    };
-  });
+  const placeFeatures = [];
 
   const streetEdgeFeatures = (
     (transitiveData && transitiveData.journeys) ||
@@ -193,7 +175,6 @@ const TransitiveCanvasOverlay = ({
     Record<string, unknown>
   > = {
     type: "FeatureCollection",
-    // @ts-expect-error TODO: fix the type above for geojson
     features: [
       ...placeFeatures,
       ...streetEdgeFeatures,
@@ -235,27 +216,6 @@ const TransitiveCanvasOverlay = ({
           and transit lines appears above access legs. Walking legs are under a separate layer
           because they use a different line dash that cannot be an expression. */}
       <Layer
-        // This layer is for WALK modes - dotted path
-        filter={["all", ["==", "type", "street-edge"], ["==", "mode", "WALK"]]}
-        id="street-edges-walk"
-        layout={{
-          "line-cap": "round",
-          "line-join": "round"
-        }}
-        paint={{
-          // TODO: get from transitive properties
-          "line-color": ["get", "color"],
-          // First parameter of array is the length of the dash which is set to zero,
-          // so that maplibre simply adds the rounded ends to make things look like dots.
-          // Even so, note that maplibre still renders beans instead of dots
-          // (as if maplibre fuses dots together).
-          "line-dasharray": [0, 1.3],
-          "line-opacity": 0.9,
-          "line-width": 6
-        }}
-        type="line"
-      />
-      <Layer
         // This layer is for other modes - dashed path
         filter={["all", ["==", "type", "street-edge"], ["!=", "mode", "WALK"]]}
         id="street-edges"
@@ -286,30 +246,6 @@ const TransitiveCanvasOverlay = ({
           "line-opacity": 1
         }}
         type="line"
-      />
-
-      {/* Render access leg places then transit stops so that they appear sandwiched between text and lines,
-          with transit stops appearing above access leg places. */}
-      <Layer
-        filter={accessLegFilter}
-        id="access-leg-circles"
-        paint={{
-          "circle-color": ["get", "color"],
-          "circle-radius": 8,
-          "circle-stroke-color": "#fff",
-          "circle-stroke-width": 3
-        }}
-        type="circle"
-      />
-      <Layer
-        filter={stopFilter}
-        id="stops-circles"
-        paint={{
-          "circle-color": "#fff",
-          "circle-radius": 7,
-          "circle-stroke-width": 3
-        }}
-        type="circle"
       />
 
       {/* Render access leg places (lowest priority) then transit stop and route labels, then origin/destination (highest priority)

@@ -243,10 +243,12 @@ export type Place = {
   departure?: number;
   lat: number;
   lon: number;
+  elevation?: number;
   name: string;
   networks?: string[];
   stopCode?: string;
   stopId?: string;
+  parentStopIds?: string[];
   stopIndex?: number;
   stopSequence?: number;
   vertexType: string;
@@ -309,6 +311,7 @@ export type Leg = {
   intermediateStops: Place[];
   interStopGeometry?: EncodedPolyline[];
   legGeometry: EncodedPolyline;
+  legElevation?: string;
   mode: string;
   pathway: boolean;
   pickupBookingInfo?: FlexPickupBookingInfo;
@@ -436,6 +439,7 @@ export type ElevationProfile = {
 export type Location = {
   lat: number;
   lon: number;
+  elevation?: number;
   name?: string;
   stopId?: string;
   /**
@@ -518,6 +522,7 @@ export type Route = {
 export type TransitivePlace = {
   place_lat?: number;
   place_lon?: number;
+  place_elevation?: number;
   place_name?: string;
   place_stopId?: string;
   placeId?: string;
@@ -567,6 +572,7 @@ export type TransitiveStop = {
 export type TransitiveStreetEdge = {
   edge_id: number;
   geometry: EncodedPolyline;
+  elevationProfile?: string;
 };
 
 export type TransitiveData = {

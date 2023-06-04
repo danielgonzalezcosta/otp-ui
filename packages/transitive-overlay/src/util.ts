@@ -61,6 +61,7 @@ function makeFromToPlace(place: Place, id: "from" | "to"): TransitivePlace {
     placeId: id,
     place_lat: place.lat,
     place_lon: place.lon,
+    place_elevation: place.elevation,
     place_name: place.name,
     place_stopId: place.stopId,
     type: id
@@ -297,7 +298,8 @@ export function itineraryToTransitive(
 
       tdata.streetEdges.push({
         edge_id: streetEdgeId,
-        geometry: leg.legGeometry
+        geometry: leg.legGeometry,
+        elevationProfile: leg.legElevation
       });
     }
 

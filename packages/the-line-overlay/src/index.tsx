@@ -1,17 +1,25 @@
-import { Itinerary, MapLocationActionArg } from "@opentripplanner/types";
+import {
+  ClearLocationArg,
+  Itinerary,
+  MapLocationActionArg,
+  Place,
+  UserLocation
+} from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import { useControl } from "react-map-gl";
-import { GeoJsonLayer, TextLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer, PathLayer, TextLayer } from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
+import turfAlong from "@turf/along";
 import turfCentroid from "@turf/centroid";
+import turfLineSliceAlong from "@turf/line-slice-along";
+import polyline from "@mapbox/polyline";
+import { PathStyleExtension } from "@deck.gl/extensions";
 import {
   DeckGlMapboxOverlay,
   DeckGlMapboxOverlayProps
 } from "./deck-gl-mapbox-overlay";
-
-// import { CollisionFilterExtension } from "@deck.gl/extensions";
 
 function DeckGLOverlay(props: DeckGlMapboxOverlayProps) {
   const overlay = useControl<any>(() => new DeckGlMapboxOverlay(props));
@@ -32,6 +40,16 @@ const iconAtlas = `
     <circle cx="85" cy="21" r="6" fill="#FFFFFF" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="10"/>
 
     <circle cx="72" cy="56" r="7" stroke="#FFFFFF" stroke-width="1" fill="#FFFFFF" fill-opacity="0.1"/>
+    
+    <circle cx="90" cy="54" r="9" stroke="#000000" stroke-width="1" fill="#FFFFFF"/>
+    <circle cx="90" cy="54" r="4" fill="#000000"/>
+
+    <circle cx="108" cy="52" r="7" stroke="#000000" stroke-width="1" fill="#FFFFFF"/>
+
+    <g transform="translate(106.5, 0) scale(0.05)">
+        <path fill="red" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"></path>
+        <path stroke="black" stroke-width="20" fill="white" fill-opacity="0.1" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"></path>
+    </g>
 </svg>
 `;
 
@@ -56,6 +74,25 @@ const iconMapping = {
     width: 16,
     height: 16,
     mask: true
+  },
+  from: {
+    x: 80,
+    y: 44,
+    width: 20,
+    height: 20
+  },
+  place: {
+    x: 100,
+    y: 44,
+    width: 16,
+    height: 16
+  },
+  to: {
+    x: 106,
+    y: 0,
+    width: 20,
+    height: 27,
+    anchorY: 27
   }
 };
 
@@ -69,9 +106,87 @@ function classifyFeature(feature): "super station" | "station" | "stop" {
   return "stop";
 }
 
+function featureFromLocation(fromAbove: boolean, location: UserLocation, type) {
+  return {
+    type: "Feature",
+    properties: {
+      endpoint: type
+    },
+    geometry: {
+      type: "Point",
+      coordinates:
+        !fromAbove && location.elevation
+          ? [location.lon, location.lat, location.elevation]
+          : [location.lon, location.lat]
+    }
+  };
+}
+
+function featureFromPlace(fromAbove: boolean, place: Place, type) {
+  return {
+    type: "Feature",
+    properties: {
+      endpoint: type
+    },
+    geometry: {
+      type: "Point",
+      coordinates:
+        !fromAbove && place.elevation
+          ? [place.lon, place.lat, place.elevation]
+          : [place.lon, place.lat]
+    }
+  };
+}
+
+function extendWithElevationProfile(points, legElevation) {
+  const linestring = polyline.toGeoJSON(points);
+  if (!legElevation) {
+    return [linestring];
+  }
+
+  const geometries = [];
+
+  const elevationProfile = legElevation.split(",");
+
+  for (let i = 0; i < elevationProfile.length - 2; i += 2) {
+    const from = parseFloat(elevationProfile[i]);
+    const fromElevation = parseFloat(elevationProfile[i + 1]);
+    const to = parseFloat(elevationProfile[i + 2]);
+    const toElevation = parseFloat(elevationProfile[i + 3]);
+
+    if (from === to) {
+      const alongPoint = turfAlong(linestring, from, { units: "meters" })
+        .geometry.coordinates;
+      if (!Number.isNaN(fromElevation) && !Number.isNaN(toElevation)) {
+        geometries.push({
+          type: "LineString",
+          coordinates: [
+            [...alongPoint, fromElevation],
+            [...alongPoint, toElevation]
+          ]
+        });
+      }
+    } else {
+      geometries.push({
+        type: "LineString",
+        coordinates: turfLineSliceAlong(linestring, from, to, {
+          units: "meters"
+        }).geometry.coordinates.map(c =>
+          !Number.isNaN(fromElevation) ? [...c, fromElevation] : c
+        )
+      });
+    }
+  }
+
+  return geometries;
+}
+
 export default function TheLineOverlay({
   id,
+  clearLocation,
   setLocation,
+  fromLocation,
+  toLocation,
   tilesBaseUrl,
   otp2Layers,
   itinerary,
@@ -89,17 +204,11 @@ export default function TheLineOverlay({
   showStopsAndStations?: boolean;
   showTheLine?: boolean;
   itinerary: Itinerary;
+  fromLocation: any;
+  toLocation: any;
   pending: any;
-  /**
-   * A method fired when a stop is selected as from or to in the default popup. If this method
-   * is not passed, the from/to buttons will not be shown.
-   */
+  clearLocation?: (arg: ClearLocationArg) => void;
   setLocation?: (location: MapLocationActionArg) => void;
-  /**
-   * A method fired when the stop viewer is opened in the default popup. If this method is
-   * not passed, the stop viewer link will not be shown.
-   */
-  setViewedStop?: ({ stopId }: { stopId: string }) => void;
   alwaysShow?: boolean;
   visible?: boolean;
 }): JSX.Element {
@@ -114,9 +223,76 @@ export default function TheLineOverlay({
   const highlightColor = [255, 207, 77];
 
   /* Only allow picking if there isn't an itinerary visible */
-  const allowPicking = true;
+  const allowPicking = !itinerary;
   const allowClicking = !itinerary;
   const opaqueLayer = !!itinerary;
+
+  const showEndpoints = true;
+
+  const walkLegs = itinerary
+    ? itinerary.legs.filter(leg => leg.mode === "WALK")
+    : [];
+  const walkGeoJson = useMemo(() => {
+    const features = [];
+    const result = {
+      type: "FeatureCollection",
+      features
+    };
+
+    walkLegs.forEach(leg => {
+      extendWithElevationProfile(
+        leg.legGeometry.points,
+        !fromAbove && leg.legElevation
+      ).forEach(geometry => {
+        features.push({
+          type: "Feature",
+          properties: {},
+          geometry
+        });
+      });
+    });
+
+    return result;
+  }, [
+    walkLegs.map(leg => leg.legGeometry.points).join(" "),
+    (fromAbove ? [] : walkLegs.map(leg => leg.legElevation)).join(" ")
+  ]);
+
+  const usedStopAndStationIds = new Set();
+  if (itinerary) {
+    itinerary.legs
+      .map(leg => [
+        leg.from.stopId,
+        ...(leg.from.parentStopIds || []),
+        leg.to.stopId,
+        ...(leg.to.parentStopIds || [])
+      ])
+      .forEach(idGroup =>
+        idGroup.forEach(itemId => usedStopAndStationIds.add(itemId))
+      );
+  }
+
+  const itineraryPlaces = useMemo(() => {
+    const features = [];
+
+    (itinerary ? itinerary.legs : []).forEach(leg => {
+      if (leg !== itinerary.legs[0]) {
+        features.push(featureFromPlace(fromAbove, leg.from, "place"));
+      }
+      if (leg !== itinerary.legs[itinerary.legs.length - 1]) {
+        features.push(featureFromPlace(fromAbove, leg.to, "place"));
+      }
+    });
+
+    return {
+      type: "FeatureCollection",
+      features
+    };
+  }, [
+    JSON.stringify(
+      itinerary ? itinerary.legs.map(leg => [leg.from, leg.to]) : []
+    )
+  ]);
 
   if (showTheLine) {
     layers.push(
@@ -210,7 +386,7 @@ export default function TheLineOverlay({
         }
       }),
       new TextLayer({
-        id: "biglabels",
+        id: `${id}-biglables` as string,
         data: "../biglabels.json",
         background: true,
         backgroundPadding: [20, 8, 20, 8],
@@ -224,8 +400,65 @@ export default function TheLineOverlay({
         getTextAnchor: "middle",
         sizeScale: 1,
         pickable: false,
-        visible: true
+        visible: !opaqueLayer
         // wrapLongitude: false,
+      })
+    );
+  }
+
+  if (walkGeoJson.features.length) {
+    layers.push(
+      new PathLayer({
+        id: `${id}-walk-legs` as string,
+        data: walkGeoJson.features,
+        extensions: [
+          new PathStyleExtension({
+            dash: true,
+            highPrecisionDash: false
+          })
+        ],
+        parameters: {
+          depthTest: false
+        },
+
+        stroked: true,
+        billboard: true,
+        capRounded: true,
+        joinRounded: true,
+        widthUnits: "pixels",
+        dashJustified: true,
+        getColor: [134, 205, 249, 224],
+        getDashArray: [0, 3],
+        getWidth: 6,
+        getPath: feature => feature.geometry.coordinates
+      })
+    );
+  }
+
+  if (itineraryPlaces.features.length) {
+    layers.push(
+      new GeoJsonLayer({
+        id: `${id}-place-icon` as string,
+        data: itineraryPlaces,
+
+        minZoom: 6,
+        maxZoom: 19,
+        visible: true,
+
+        pointType: "icon",
+        parameters: {
+          depthTest: false
+        },
+
+        iconBillboard: true,
+        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
+        iconMapping,
+        iconSizeUnits: "pixels",
+        iconSizeScale: 1,
+        iconSizeMinPixels: 10,
+        iconSizeMaxPixels: 100,
+        getIconSize: feature => iconMapping[feature.properties.endpoint].height,
+        getIcon: feature => feature.properties.endpoint
       })
     );
   }
@@ -262,10 +495,19 @@ export default function TheLineOverlay({
         getIconSize: feature => iconMapping[classifyFeature(feature)].height,
         getIcon: feature => classifyFeature(feature),
         getIconColor: feature => {
+          if (usedStopAndStationIds.has(feature.properties.gtfsId)) {
+            return [255, 255, 255, 0];
+          }
           if (feature.properties.gtfsId === hoveredEntityId) {
             return highlightColor;
           }
-          return [255, 255, 255, opaqueLayer ? 64 : 255];
+          if (
+            opaqueLayer &&
+            !usedStopAndStationIds.has(feature.properties.gtfsId)
+          ) {
+            return [255, 255, 255, 64];
+          }
+          return [255, 255, 255, 255];
         }
       }),
 
@@ -343,19 +585,88 @@ export default function TheLineOverlay({
     );
   }
 
+  if (showEndpoints) {
+    const endpointGeoJson = {
+      type: "FeatureCollection",
+      features: []
+    };
+
+    if (itinerary) {
+      endpointGeoJson.features.push(
+        featureFromPlace(fromAbove, itinerary.legs[0].from, "from")
+      );
+      endpointGeoJson.features.push(
+        featureFromPlace(
+          fromAbove,
+          itinerary.legs[itinerary.legs.length - 1].to,
+          "to"
+        )
+      );
+    } else {
+      if (fromLocation) {
+        endpointGeoJson.features.push(
+          featureFromLocation(fromAbove, fromLocation, "from")
+        );
+      }
+      if (toLocation) {
+        endpointGeoJson.features.push(
+          featureFromLocation(fromAbove, toLocation, "to")
+        );
+      }
+    }
+
+    layers.push(
+      new GeoJsonLayer({
+        id: `${id}-endpoints` as string,
+        data: endpointGeoJson,
+
+        minZoom: 6,
+        maxZoom: 19,
+        visible: true,
+        pickable: true,
+
+        pointType: "icon",
+        parameters: {
+          depthTest: false
+        },
+
+        iconBillboard: true,
+        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
+        iconMapping,
+        iconSizeUnits: "pixels",
+        iconSizeScale: 1,
+        iconSizeMinPixels: 10,
+        iconSizeMaxPixels: 100,
+        getIconSize: feature => iconMapping[feature.properties.endpoint].height,
+        getIcon: feature => feature.properties.endpoint
+      })
+    );
+  }
+
   const onClick = useCallback((info: PickingInfo) => {
     if (allowClicking && info && info.object) {
-      const centroid = turfCentroid(info.object);
+      if (info.object.properties.endpoint) {
+        clearLocation({
+          locationType: info.object.properties.endpoint as string
+        });
+      } else {
+        const centroid = turfCentroid(info.object);
+        const elevation =
+          info.object.geometry.type === "Polygon"
+            ? info.object.geometry.coordinates[0][0][2]
+            : info.object.properties.elevation;
 
-      setLocation({
-        locationType: "automatic",
-        location: {
-          name: info.object.properties.name,
-          stopId: info.object.properties.gtfsId,
-          lon: centroid.geometry.coordinates[0],
-          lat: centroid.geometry.coordinates[1]
-        }
-      });
+        setLocation({
+          locationType: "automatic",
+          location: {
+            name: info.object.properties.name,
+            stopId: info.object.properties.gtfsId,
+            lon: centroid.geometry.coordinates[0],
+            lat: centroid.geometry.coordinates[1],
+            elevation
+          }
+        });
+      }
     }
   }, []);
 
@@ -373,7 +684,7 @@ export default function TheLineOverlay({
   }
 
   function getCursor({ isHovering }): string {
-    return isHovering && allowClicking ? "pointer" : "";
+    return isHovering ? "pointer" : "";
   }
 
   return (

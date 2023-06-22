@@ -57,27 +57,7 @@ export function TripDetails({
         />
       </S.TripDetailsHeader>
       <S.TripDetailsBody className="trip-details-body">
-        <TripDetail
-          // Any custom description for the Departure message needs to be handled by the slot.
-          description={
-            DepartureDetails && (
-              <DepartureDetails departureDate={departureDate} />
-            )
-          }
-          summary={
-            <S.Timing className="trip-details-time">
-              <FormattedMessage
-                defaultMessage={defaultMessages["otpUi.TripDetails.departure"]}
-                description="Text showing the departure date/time for a trip."
-                id="otpUi.TripDetails.departure"
-                values={{
-                  departureDate,
-                  strong: boldText
-                }}
-              />
-            </S.Timing>
-          }
-        />
+        
         {totalTripDistance > 0 && (
           <TripDetail
             summary={

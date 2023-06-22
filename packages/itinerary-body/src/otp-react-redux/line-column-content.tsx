@@ -13,7 +13,7 @@ interface LegLineProps {
 }
 
 const cssWalk = css`
-  background: radial-gradient(ellipse at center, #87cefa 40%, transparent 10%);
+  background: radial-gradient(ellipse at center, #ff00e7 40%, transparent 10%);
   background-position: center -5px;
   background-repeat: repeat-y;
   background-size: 12px 12px;

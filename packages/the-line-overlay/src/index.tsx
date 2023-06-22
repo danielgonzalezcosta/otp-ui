@@ -8,7 +8,7 @@ import {
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useMemo, useState } from "react"
 import { useControl } from "react-map-gl";
-import { GeoJsonLayer, PathLayer, TextLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer, PathLayer, TextLayer , PolygonLayer} from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
 import turfAlong from "@turf/along";
@@ -296,6 +296,36 @@ export default function TheLineOverlay({
 
   if (showTheLine) {
     layers.push(
+      new PolygonLayer({
+        id: 'boundary',
+        data: "../boundary.json",
+        extruded: false,
+        filled: false,
+        getLineColor: [255, 255, 255, 170],
+        getLineWidth: d => 1,
+        getPolygon: d => d.coordinates,
+        lineWidthMinPixels: 2,
+        stroked: true,
+        wireframe: true,
+        
+      }),
+      new GeoJsonLayer({
+        id: 'magna',
+        data: "../magna_internal.geojson",
+        minZoom: 11,
+        maxZoom: 19,
+        stroked: true,
+        //extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 1,
+        pickable: false,
+        visible: true,
+        //getElevation: f => f.properties.height,
+        getFillColor: [225, 225, 225, 164],
+        
+      }),
       new GeoJsonLayer({
         id: `${id}-geojson-building-base` as string,
         data: `${dataUrl}?v=1` as string,
@@ -321,8 +351,8 @@ export default function TheLineOverlay({
         filled: true,
         pickable: allowPicking,
         visible: !farOut && !fromAbove,
-        getLineColor: [0, 0, 0, 128],
-        getLineWidth: 4,
+        getLineColor: [255, 255, 255, 128],
+        getLineWidth: 6,
         getFillColor: feature => {
           if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
             return [...highlightColor, 128] as [number, number, number, number];
@@ -349,8 +379,8 @@ export default function TheLineOverlay({
         pickable: allowPicking && (farOut || fromAbove),
         lineWidthUnits: "pixels",
         getElevation: f => (fromAbove ? 0 : f.properties.height),
-        getLineColor: [0, 0, 0, 196],
-        getLineWidth: 3,
+        getLineColor: [255, 255, 255, 196],
+        getLineWidth: 6,
         getFillColor: feature => {
           if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
             return [...highlightColor, fromAbove ? 255 : 128] as [
@@ -403,6 +433,7 @@ export default function TheLineOverlay({
         visible: !opaqueLayer
         // wrapLongitude: false,
       })
+      
     );
   }
 
@@ -427,7 +458,7 @@ export default function TheLineOverlay({
         joinRounded: true,
         widthUnits: "pixels",
         dashJustified: true,
-        getColor: [134, 205, 249, 224],
+        getColor: [255, 0, 231, 224],
         getDashArray: [0, 3],
         getWidth: 6,
         getPath: feature => feature.geometry.coordinates
@@ -542,7 +573,7 @@ export default function TheLineOverlay({
             ? [0, iconMapping[classifyFeature(feature)].width / 2 + 10]
             : [-(iconMapping[classifyFeature(feature)].width / 2) - 4, 0],
         getTextSize: feature =>
-          classifyFeature(feature) === "super station" ? 14 : 10,
+          classifyFeature(feature) === "super station" ? 18 : 14,
         getTextColor: feature => {
           if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
@@ -577,7 +608,7 @@ export default function TheLineOverlay({
         textBackground: true,
         textFontFamily: "Brown-Regular",
         textFontSettings: {
-          fontSize: 32,
+          fontSize: 36,
           sdf: true,
           fontFamily: "Brown-Regular"
         }

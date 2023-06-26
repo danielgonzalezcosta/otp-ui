@@ -8,7 +8,12 @@ import {
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useMemo, useState } from "react"
 import { useControl } from "react-map-gl";
-import { GeoJsonLayer, PathLayer, TextLayer , PolygonLayer} from "@deck.gl/layers/typed";
+import {
+  GeoJsonLayer,
+  PathLayer,
+  TextLayer,
+  PolygonLayer
+} from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
 import turfAlong from "@turf/along";
@@ -297,34 +302,34 @@ export default function TheLineOverlay({
   if (showTheLine) {
     layers.push(
       new PolygonLayer({
-        id: 'boundary',
-        data: "../boundary.json",
+        id: "neom-boundary",
+        data: "/boundary.json",
         extruded: false,
         filled: false,
         getLineColor: [255, 255, 255, 170],
-        getLineWidth: d => 1,
+        getLineWidth: () => 1,
         getPolygon: d => d.coordinates,
         lineWidthMinPixels: 2,
         stroked: true,
         wireframe: true,
-        
+        beforeId: "street-edges"
       }),
       new GeoJsonLayer({
-        id: 'magna',
-        data: "../magna_internal.geojson",
+        id: "magna-buildings",
+        data: "/magna_internal.geojson",
         minZoom: 11,
         maxZoom: 19,
         stroked: true,
-        //extruded: true,
+        // extruded: true,
         filled: true,
         wireframe: false,
         getLineColor: [255, 255, 255, 200],
         getLineWidth: 1,
         pickable: false,
         visible: true,
-        //getElevation: f => f.properties.height,
+        // getElevation: f => f.properties.height,
         getFillColor: [225, 225, 225, 164],
-        
+        beforeId: "street-edges"
       }),
       new GeoJsonLayer({
         id: `${id}-geojson-building-base` as string,
@@ -433,7 +438,6 @@ export default function TheLineOverlay({
         visible: !opaqueLayer
         // wrapLongitude: false,
       })
-      
     );
   }
 

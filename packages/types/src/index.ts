@@ -401,6 +401,7 @@ export type Fare = {
 export type Itinerary = {
   co2?: number;
   co2VsBaseline?: number;
+  co2Category?: "low" | "mid" | "high";
   duration: number;
   elevationGained: number;
   elevationLost: number;

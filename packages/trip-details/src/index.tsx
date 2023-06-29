@@ -23,12 +23,9 @@ const defaultMessages: Record<string, string> = flatten(defaultEnglishMessages);
  */
 export function TripDetails({
   className = "",
-  DepartureDetails = null,
   useMetricUnits,
   itinerary
 }: TripDetailsProps): ReactElement {
-  const departureDate = new Date(itinerary.startTime);
-
   const intl = useIntl();
 
   const totalDuration = itinerary.duration;
@@ -57,7 +54,6 @@ export function TripDetails({
         />
       </S.TripDetailsHeader>
       <S.TripDetailsBody className="trip-details-body">
-        
         {totalTripDistance > 0 && (
           <TripDetail
             summary={

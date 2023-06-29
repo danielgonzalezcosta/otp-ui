@@ -29,21 +29,10 @@ export function patternToRouteFeature(
       if (index !== 0) coords.shift();
       return result.concat(coords);
     }, []);
-  const routeName = route.route_short_name || route.route_long_name || "";
-  // HACK: Create an uppercase version of the route name to paint the background, where
-  // - spaces are replaced with '!' (~same width as space)
-  // - "+", "-", certain letters and numbers are replaced with "E" to create a background with a uniform height and fill.
-  // Also, ensure there is a minimum background width (3 characters).
-  // Disclaimer: height of substitution characters can vary from font to font.
-  const routeNameUpper = (routeName.length < 3 ? "EEE" : routeName)
-    .toUpperCase()
-    .replace(/\s/g, "!")
-    .replace(/[+-0124679FHJLPTVXYZ]/g, "E");
-
   const properties = {
     color: `#${route.route_color || "000080"}`,
-    //name: routeName,
-    //nameUpper: routeNameUpper,
+    // name: routeName,
+    // nameUpper: routeNameUpper,
     routeType: route.route_type,
     textColor: `#${route.route_text_color || "eee"}`,
     type: "route"

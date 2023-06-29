@@ -312,7 +312,7 @@ export default function TheLineOverlay({
         lineWidthMinPixels: 2,
         stroked: true,
         wireframe: true,
-        beforeId: "street-edges"
+        beforeId: "boundary_country_outline"
       }),
       new GeoJsonLayer({
         id: "magna-buildings",
@@ -329,7 +329,7 @@ export default function TheLineOverlay({
         visible: true,
         // getElevation: f => f.properties.height,
         getFillColor: [225, 225, 225, 164],
-        beforeId: "street-edges"
+        beforeId: "building-top"
       }),
       new GeoJsonLayer({
         id: `${id}-geojson-building-base` as string,

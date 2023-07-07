@@ -372,7 +372,7 @@ const queryParams = [
     /* walkSpeed -- the user's walking speed in m/s */
     name: "walkSpeed",
     routingTypes: ["ITINERARY", "PROFILE"],
-    default: 1.34,
+    default: 0.15,
     selector: "DROPDOWN",
     label: "Walk Speed",
     applicable: query => query.mode && query.mode.indexOf("WALK") !== -1,

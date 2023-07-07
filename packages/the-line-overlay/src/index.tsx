@@ -301,6 +301,7 @@ export default function TheLineOverlay({
 
   if (showTheLine) {
     layers.push(
+      /*
       new PolygonLayer({
         id: "neom-boundary",
         data: "/boundary.json",
@@ -313,6 +314,39 @@ export default function TheLineOverlay({
         stroked: true,
         wireframe: true,
         beforeId: "boundary_country_outline"
+      }),
+      */
+      new GeoJsonLayer({
+        id: "neom-out",
+        data: "/neom_out.geojson",
+       
+        stroked: false,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 0,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [38, 41, 45, 255],
+        beforeId: "street-edges"
+      }),
+      new GeoJsonLayer({
+        id: "hidden-marina",
+        data: "/hidden_marina.geojson",
+       
+        stroked: false,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 0,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [38, 41, 45, 255],
+        beforeId: "street-edges"
       }),
       new GeoJsonLayer({
         id: "magna-buildings",

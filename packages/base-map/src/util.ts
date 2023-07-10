@@ -19,7 +19,7 @@ export function getFitBoundsPadding(
 
   return {
     bottom: vertPadding,
-    left: horizPadding,
+    left: horizPadding + 500,
     right: horizPadding,
     top: vertPadding
   };

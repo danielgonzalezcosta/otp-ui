@@ -8,12 +8,7 @@ import {
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useMemo, useState } from "react"
 import { useControl } from "react-map-gl";
-import {
-  GeoJsonLayer,
-  PathLayer,
-  TextLayer,
-  PolygonLayer
-} from "@deck.gl/layers/typed";
+import { GeoJsonLayer, PathLayer, TextLayer } from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
 import { PickingInfo } from "@deck.gl/core/typed";
 import turfAlong from "@turf/along";
@@ -319,7 +314,7 @@ export default function TheLineOverlay({
       new GeoJsonLayer({
         id: "neom-out",
         data: "/neom_out.geojson",
-       
+
         stroked: false,
         // extruded: true,
         filled: true,
@@ -335,7 +330,7 @@ export default function TheLineOverlay({
       new GeoJsonLayer({
         id: "hidden-marina",
         data: "/hidden_marina.geojson",
-       
+
         stroked: false,
         // extruded: true,
         filled: true,

@@ -296,21 +296,6 @@ export default function TheLineOverlay({
 
   if (showTheLine) {
     layers.push(
-      /*
-      new PolygonLayer({
-        id: "neom-boundary",
-        data: "/boundary.json",
-        extruded: false,
-        filled: false,
-        getLineColor: [255, 255, 255, 170],
-        getLineWidth: () => 1,
-        getPolygon: d => d.coordinates,
-        lineWidthMinPixels: 2,
-        stroked: true,
-        wireframe: true,
-        beforeId: "boundary_country_outline"
-      }),
-      */
       new GeoJsonLayer({
         id: "neom-out",
         data: "/neom_out.geojson",
@@ -361,62 +346,27 @@ export default function TheLineOverlay({
         beforeId: "building-top"
       }),
       new GeoJsonLayer({
-        id: `${id}-geojson-building-base` as string,
-        data: `${dataUrl}?v=1` as string,
-        stroked: false,
-        extruded: !fromAbove,
-        filled: true,
-        wireframe: false,
-        pickable: false,
-        visible: farOut || fromAbove,
-        getElevation: f => (fromAbove ? 0 : f.properties.height),
-        getFillColor: [225, 225, 225, 64],
-        onDataLoad: (value: any) => {
-          value.features = value.features.filter(v => v.properties.building);
-        }
-      }),
-      new GeoJsonLayer({
-        id: `${id}-geojson-level` as string,
-        data: `${dataUrl}?v=2` as string,
-        updateTriggers: {
-          getFillColor: [allowClicking, hoveredEntityId]
-        },
-        stroked: true,
-        filled: true,
-        pickable: allowPicking,
-        visible: !farOut && !fromAbove,
-        getLineColor: [255, 255, 255, 128],
-        getLineWidth: 6,
-        getFillColor: feature => {
-          if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
-            return [...highlightColor, 128] as [number, number, number, number];
-          }
-          return [0, 0, 0, 0];
-        },
-        onDataLoad: (value: any) => {
-          value.features = value.features.filter(
-            v => v.properties.module && v.properties.level
-          );
-        }
-      }),
-      new GeoJsonLayer({
-        id: `${id}-geojson-module-outline` as string,
+        id: `${id}-geojson-module` as string,
         data: `${dataUrl}?v=1.1` as string,
         updateTriggers: {
           getElevation: [fromAbove],
+          getLineColor: [allowClicking, hoveredEntityId],
           getFillColor: [allowClicking, fromAbove, hoveredEntityId]
         },
         stroked: fromAbove && !farOut,
+        filled: true,
         extruded: !fromAbove,
-        filled: farOut || fromAbove,
-        wireframe: !fromAbove,
         pickable: allowPicking && (farOut || fromAbove),
         lineWidthUnits: "pixels",
         getElevation: f => (fromAbove ? 0 : f.properties.height),
         getLineColor: [255, 255, 255, 196],
-        getLineWidth: 6,
+        getLineWidth: 4,
         getFillColor: feature => {
-          if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
+          if (
+            allowClicking &&
+            (farOut || fromAbove) &&
+            feature.properties.gtfsId === hoveredEntityId
+          ) {
             return [...highlightColor, fromAbove ? 255 : 128] as [
               number,
               number,
@@ -424,7 +374,11 @@ export default function TheLineOverlay({
               number
             ];
           }
-          return fromAbove ? [200, 200, 200, 196] : [220, 220, 220, 64];
+          return fromAbove
+            ? [200, 200, 200, 196]
+            : farOut
+            ? [220, 220, 220, 64]
+            : [128, 128, 128, 128];
         },
         onDataLoad: (value: any) => {
           value.features = value.features.filter(
@@ -433,20 +387,32 @@ export default function TheLineOverlay({
         }
       }),
       new GeoJsonLayer({
-        id: `${id}-geojson-building-fill` as string,
-        data: `${dataUrl}?v=1` as string,
-        stroked: false,
-        extruded: true,
+        id: `${id}-geojson-level` as string,
+        data: `${dataUrl}?v=2` as string,
+        updateTriggers: {
+          getFillColor: [allowClicking, hoveredEntityId]
+        },
+        parameters: {
+          depthTest: false
+        },
         filled: true,
-        wireframe: false,
-        getLineColor: [0, 0, 0, 16],
-        getLineWidth: 4,
-        pickable: false,
+        wireframe: true,
+        pickable: allowPicking,
+        extruded: true,
         visible: !farOut && !fromAbove,
         getElevation: f => f.properties.height,
-        getFillColor: [225, 225, 225, 64],
+        getLineColor: [255, 255, 255, 196],
+        getLineWidth: 4,
+        getFillColor: feature => {
+          if (allowClicking && feature.properties.gtfsId === hoveredEntityId) {
+            return [...highlightColor, 128] as [number, number, number, number];
+          }
+          return [0, 0, 0, 0];
+        },
         onDataLoad: (value: any) => {
-          value.features = value.features.filter(v => v.properties.building);
+          value.features = value.features.filter(
+            v => v.properties.module >= 0 && v.properties.level >= 0
+          );
         }
       }),
       new TextLayer({

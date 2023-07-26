@@ -36,6 +36,8 @@ function StandardModeIcon({ mode, ...props }) {
       return <ClassicFerry {...props} />;
     case "gondola":
       return <StandardGondola {...props} />;
+    case "funicular":
+      return <StandardGondola {...props} />;
     case "micromobility":
     case "micromobility_rent":
     case "scooter":

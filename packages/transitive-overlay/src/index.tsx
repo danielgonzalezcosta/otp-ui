@@ -30,9 +30,10 @@ const modeColorMap = {
  * Apply a thin, white halo around the (black) text.
  */
 const defaultTextPaintParams = {
-  "text-halo-blur": 1,
+  "text-halo-blur": 0,
   "text-halo-color": "#ffffff",
-  "text-halo-width": 2
+  "text-halo-width": 0,
+  "text-color": "#ffffff",
 };
 
 /**
@@ -44,7 +45,7 @@ const commonTextLayoutParams: SymbolLayout = {
   "text-field": ["get", "name"],
   "text-justify": "auto",
   "text-radial-offset": 1,
-  "text-size": 15
+  "text-size": 18,
 };
 
 /**

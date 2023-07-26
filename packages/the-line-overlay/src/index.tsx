@@ -295,23 +295,7 @@ export default function TheLineOverlay({
   ]);
 
   if (showTheLine) {
-    layers.push(
-      new GeoJsonLayer({
-        id: "neom-out",
-        data: "/neom_out.geojson",
-
-        stroked: false,
-        // extruded: true,
-        filled: true,
-        wireframe: false,
-        getLineColor: [255, 255, 255, 200],
-        getLineWidth: 0,
-        pickable: false,
-        visible: true,
-        // getElevation: f => f.properties.height,
-        getFillColor: [38, 41, 45, 255],
-        beforeId: "street-edges"
-      }),
+    layers.push(     
       new GeoJsonLayer({
         id: "hidden-marina",
         data: "/hidden_marina.geojson",
@@ -331,6 +315,23 @@ export default function TheLineOverlay({
       new GeoJsonLayer({
         id: "magna-buildings",
         data: "/magna_internal.geojson",
+        minZoom: 11,
+        maxZoom: 19,
+        stroked: true,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 1,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [225, 225, 225, 164],
+        beforeId: "building-top"
+      }),
+      new GeoJsonLayer({
+        id: "oxagon-internal",
+        data: "/oxagon_internal.geojson",
         minZoom: 11,
         maxZoom: 19,
         stroked: true,
@@ -564,13 +565,13 @@ export default function TheLineOverlay({
             : feature.properties.name.toUpperCase();
         },
         getTextAnchor: feature =>
-          classifyFeature(feature) === "super station" ? "middle" : "end",
+          classifyFeature(feature) === "super station" ? "middle" : "middle",
         getTextAlignmentBaseline: feature =>
-          classifyFeature(feature) === "super station" ? "top" : "center",
+          classifyFeature(feature) === "super station" ? "top" : "top",
         getTextPixelOffset: feature =>
           classifyFeature(feature) === "super station"
-            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 10]
-            : [-(iconMapping[classifyFeature(feature)].width / 2) - 4, 0],
+            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 30]
+            : [0, iconMapping[classifyFeature(feature)].width / 2 + 10],
         getTextSize: feature =>
           classifyFeature(feature) === "super station" ? 18 : 14,
         getTextColor: feature => {

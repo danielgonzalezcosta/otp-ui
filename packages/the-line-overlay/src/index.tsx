@@ -10,7 +10,7 @@ import React, { useCallback, useMemo, useState } from "react"
 import { useControl } from "react-map-gl";
 import { GeoJsonLayer, PathLayer, TextLayer } from "@deck.gl/layers/typed";
 import { MVTLayer } from "@deck.gl/geo-layers/typed";
-import { PickingInfo } from "@deck.gl/core/typed";
+import { Color, PickingInfo } from "@deck.gl/core/typed";
 import turfAlong from "@turf/along";
 import turfCentroid from "@turf/centroid";
 import turfLineSliceAlong from "@turf/line-slice-along";
@@ -220,7 +220,7 @@ export default function TheLineOverlay({
 
   const layers: any[] = [];
 
-  const highlightColor = [255, 207, 77];
+  const highlightColor: Color = [255, 207, 77];
 
   /* Only allow picking if there isn't an itinerary visible */
   const allowPicking = !itinerary;
@@ -295,22 +295,18 @@ export default function TheLineOverlay({
   ]);
 
   if (showTheLine) {
-    layers.push(     
+    layers.push(
       new GeoJsonLayer({
         id: "hidden-marina",
         data: "/hidden_marina.geojson",
 
-        stroked: false,
         // extruded: true,
         filled: true,
-        wireframe: false,
-        getLineColor: [255, 255, 255, 200],
-        getLineWidth: 0,
         pickable: false,
         visible: true,
         // getElevation: f => f.properties.height,
         getFillColor: [38, 41, 45, 255],
-        beforeId: "street-edges"
+        beforeId: "building-top"
       }),
       new GeoJsonLayer({
         id: "magna-buildings",
@@ -414,6 +410,82 @@ export default function TheLineOverlay({
           value.features = value.features.filter(
             v => v.properties.module >= 0 && v.properties.level >= 0
           );
+        }
+      }),
+      new GeoJsonLayer({
+        id: "hidden-marina-line",
+        data: "/hidden_marina_the_line.geojson",
+
+        minZoom: 15,
+        maxZoom: 22,
+
+        parameters: {
+          depthTest: false
+        },
+
+        updateTriggers: {
+          getIconColor: [opaqueLayer, hoveredEntityId],
+          getText: [opaqueLayer, hoveredEntityId],
+          getTextPixelOffset: [opaqueLayer, hoveredEntityId],
+          getTextColor: [opaqueLayer, hoveredEntityId],
+          getTextBackgroundColor: [opaqueLayer, hoveredEntityId]
+        },
+
+        pickable: true,
+        visible: !fromAbove,
+        pointType: "icon+text",
+
+        iconBillboard: true,
+        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
+        iconMapping,
+        iconSizeUnits: "pixels",
+        iconSizeScale: 1,
+        iconSizeMinPixels: 10,
+        iconSizeMaxPixels: 100,
+        getIconSize: feature => feature && iconMapping.stop.height,
+        getIcon: feature => feature && "stop",
+        getIconColor: feature => {
+          if (usedStopAndStationIds.has(feature.properties.gtfsId)) {
+            return [255, 255, 255, 0];
+          }
+          if (feature.properties.gtfsId === hoveredEntityId) {
+            return [...highlightColor, 255];
+          }
+          return [255, 255, 255, 255];
+        },
+
+        getText: feature =>
+          feature.properties.gtfsId !== hoveredEntityId
+            ? ""
+            : feature.properties.name,
+        getTextAnchor: "middle",
+        getTextAlignmentBaseline: "top",
+        getTextPixelOffset: feature =>
+          feature.properties.gtfsId !== hoveredEntityId
+            ? [0, 0]
+            : [0, iconMapping[classifyFeature(feature)].width / 2 + 10],
+        getTextSize: 14,
+        getTextColor: feature => {
+          if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
+            return [0, 0, 0, 0];
+          }
+
+          return [...highlightColor, 255];
+        },
+        getTextBackgroundColor: feature => {
+          if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
+            return [0, 0, 0, 0];
+          }
+
+          return [0, 0, 0, 64];
+        },
+        textBackgroundPadding: [20, 8, 20, 8],
+        textBackground: true,
+        textFontFamily: "Brown-Regular",
+        textFontSettings: {
+          fontSize: 36,
+          sdf: true,
+          fontFamily: "Brown-Regular"
         }
       }),
       new TextLayer({
@@ -530,7 +602,7 @@ export default function TheLineOverlay({
             return [255, 255, 255, 0];
           }
           if (feature.properties.gtfsId === hoveredEntityId) {
-            return highlightColor;
+            return [...highlightColor, 255];
           }
           if (
             opaqueLayer &&
@@ -682,9 +754,13 @@ export default function TheLineOverlay({
         });
       } else {
         const centroid = turfCentroid(info.object);
-        const elevation =
+        const firstPoint =
           info.object.geometry.type === "Polygon"
-            ? info.object.geometry.coordinates[0][0][2]
+            ? info.object.geometry.coordinates[0][0]
+            : info.object.geometry.coordinates;
+        const elevation =
+          firstPoint.length === 3
+            ? firstPoint[2]
             : info.object.properties.elevation;
 
         setLocation({

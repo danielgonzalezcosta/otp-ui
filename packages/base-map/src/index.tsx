@@ -128,7 +128,8 @@ const BaseMap = ({
       longitude={viewState.longitude}
       mapLib={maplibregl}
       mapStyle={activeBaseLayer}
-      maxZoom={maxZoom}
+      maxZoom={17}
+      minZoom={9}
       onClick={onClick}
       onContextMenu={onContextMenu}
       onMove={evt => {

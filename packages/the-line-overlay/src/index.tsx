@@ -215,12 +215,14 @@ export default function TheLineOverlay({
   const [hoveredEntityId, setHoveredEntityId] = useState<string>(null);
   const [farOut, setFarOut] = useState<boolean>(false);
   const [fromAbove, setFromAbove] = useState<boolean>(false);
+  const [visibleLayer15, setVisibleLayer15] = useState<boolean>(false);
 
   const tileUrl = `${tilesBaseUrl}/${otp2Layers.join(",")}/tilejson.json`;
 
   const layers: any[] = [];
 
   const highlightColor: Color = [255, 207, 77];
+ 
 
   /* Only allow picking if there isn't an itinerary visible */
   const allowPicking = !itinerary;
@@ -297,15 +299,47 @@ export default function TheLineOverlay({
   if (showTheLine) {
     layers.push(
       new GeoJsonLayer({
+        id: "neom-out",
+        data: "/neom_out.geojson",
+        stroked: false,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 180],
+        getLineWidth: 0,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [38, 41, 45, 255],
+        beforeId: "street-edges"
+      }),
+      new GeoJsonLayer({
         id: "hidden-marina",
         data: "/hidden_marina.geojson",
-
         // extruded: true,
+        stroked: false,
         filled: true,
         pickable: false,
         visible: true,
         // getElevation: f => f.properties.height,
         getFillColor: [38, 41, 45, 255],
+        beforeId: "building-top"
+      }),
+      new GeoJsonLayer({
+        id: "roads-overlay",
+        data: "/roads_overlay.geojson",
+        minZoom: 11,
+        maxZoom: 19,
+        stroked: true,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 20,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [225, 225, 225, 164],
         beforeId: "building-top"
       }),
       new GeoJsonLayer({
@@ -415,10 +449,8 @@ export default function TheLineOverlay({
       new GeoJsonLayer({
         id: "hidden-marina-line",
         data: "/hidden_marina_the_line.geojson",
-
         minZoom: 15,
         maxZoom: 22,
-
         parameters: {
           depthTest: false
         },
@@ -434,7 +466,6 @@ export default function TheLineOverlay({
         pickable: true,
         visible: !fromAbove,
         pointType: "icon+text",
-
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
         iconMapping,
@@ -446,7 +477,7 @@ export default function TheLineOverlay({
         getIcon: feature => feature && "stop",
         getIconColor: feature => {
           if (usedStopAndStationIds.has(feature.properties.gtfsId)) {
-            return [255, 255, 255, 0];
+            return [255, 255, 255, 255];
           }
           if (feature.properties.gtfsId === hoveredEntityId) {
             return [...highlightColor, 255];
@@ -456,25 +487,98 @@ export default function TheLineOverlay({
 
         getText: feature =>
           feature.properties.gtfsId !== hoveredEntityId
-            ? ""
+            ? feature.properties.name
             : feature.properties.name,
         getTextAnchor: "middle",
         getTextAlignmentBaseline: "top",
         getTextPixelOffset: feature =>
           feature.properties.gtfsId !== hoveredEntityId
-            ? [0, 0]
+            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 10]
             : [0, iconMapping[classifyFeature(feature)].width / 2 + 10],
         getTextSize: 14,
         getTextColor: feature => {
           if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
-            return [0, 0, 0, 0];
+            return [255, 255, 255, 255];
           }
 
           return [...highlightColor, 255];
         },
         getTextBackgroundColor: feature => {
           if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
-            return [0, 0, 0, 0];
+            return [0, 0, 0, 64];
+          }
+
+          return [0, 0, 0, 64];
+        },
+        textBackgroundPadding: [20, 8, 20, 8],
+        textBackground: true,
+        textFontFamily: "Brown-Regular",
+        textFontSettings: {
+          fontSize: 36,
+          sdf: true,
+          fontFamily: "Brown-Regular"
+        }
+      }),
+      new GeoJsonLayer({
+        id: "hidden-marina-line-other",
+        data: "/hidden_marina_the_line_other.geojson",
+        minZoom: 15,
+        maxZoom: 22,
+        parameters: {
+          depthTest: false
+        },
+
+        updateTriggers: {
+          getIconColor: [opaqueLayer, hoveredEntityId],
+          getText: [opaqueLayer, hoveredEntityId],
+          getTextPixelOffset: [opaqueLayer, hoveredEntityId],
+          getTextColor: [opaqueLayer, hoveredEntityId],
+          getTextBackgroundColor: [opaqueLayer, hoveredEntityId]
+        },
+
+        pickable: true,
+        visible: !fromAbove && visibleLayer15,
+        pointType: "icon+text",
+        iconBillboard: true,
+        iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
+        iconMapping,
+        iconSizeUnits: "pixels",
+        iconSizeScale: 1,
+        iconSizeMinPixels: 10,
+        iconSizeMaxPixels: 100,
+        getIconSize: feature => feature && iconMapping.stop.height,
+        getIcon: feature => feature && "stop",
+        getIconColor: feature => {
+          if (usedStopAndStationIds.has(feature.properties.gtfsId)) {
+            return [255, 255, 255, 255];
+          }
+          if (feature.properties.gtfsId === hoveredEntityId) {
+            return [...highlightColor, 255];
+          }
+          return [255, 255, 255, 255];
+        },
+
+        getText: feature =>
+          feature.properties.gtfsId !== hoveredEntityId
+            ? feature.properties.name
+            : feature.properties.name,
+        getTextAnchor: "middle",
+        getTextAlignmentBaseline: "top",
+        getTextPixelOffset: feature =>
+          feature.properties.gtfsId !== hoveredEntityId
+            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 10]
+            : [0, iconMapping[classifyFeature(feature)].width / 2 + 10],
+        getTextSize: 14,
+        getTextColor: feature => {
+          if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
+            return [255, 255, 255, 255];
+          }
+
+          return [...highlightColor, 255];
+        },
+        getTextBackgroundColor: feature => {
+          if (feature.properties.gtfsId !== hoveredEntityId || opaqueLayer) {
+            return [0, 0, 0, 64];
           }
 
           return [0, 0, 0, 64];
@@ -788,6 +892,7 @@ export default function TheLineOverlay({
   function onViewStateChange({ viewState }) {
     setFarOut(viewState.zoom <= 13);
     setFromAbove(viewState.pitch <= 10);
+    setVisibleLayer15(viewState.zoom >= 15);
   }
 
   function getCursor({ isHovering }): string {

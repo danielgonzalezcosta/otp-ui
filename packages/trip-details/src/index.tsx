@@ -84,7 +84,7 @@ export function TripDetails({
                   description="Text showing the total duration for a trip."
                   id="otpUi.TripDetails.totalDuration"
                   values={{
-                    minutes: Math.round(totalDuration / 60),
+                    minutes: Math.floor(totalDuration / 60),
                     strong: boldText
                   }}
                 />

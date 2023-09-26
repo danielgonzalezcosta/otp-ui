@@ -38,7 +38,7 @@ function ClassicModeIcon({ mode, ...props }) {
     case "gondola":
       return <ClassicGondola {...props} />;
     case "funicular":
-        return <ClassicGondola {...props} />;
+        return <ClassicMicromobility {...props} />;
     case "micromobility":
     case "micromobility_rent":
     case "scooter":

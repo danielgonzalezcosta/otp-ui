@@ -844,6 +844,7 @@ const LocationField = ({
             id: "otpUi.LocationField.suggestedLocations"
           })}
           id={listBoxId}
+          className="suggested"
         >
           {isStatic || (menuItems.length === 0 && menuVisible) ? (
             menuItems.length > 0 ? ( // Show typing prompt to avoid empty screen

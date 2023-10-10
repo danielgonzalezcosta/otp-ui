@@ -3,7 +3,7 @@ import {
   Itinerary,
   MapLocationActionArg,
   Place,
-  UserLocation
+  UserLocation,
 } from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useMemo, useState } from "react"
@@ -20,6 +20,7 @@ import {
   DeckGlMapboxOverlay,
   DeckGlMapboxOverlayProps
 } from "./deck-gl-mapbox-overlay";
+import { feature } from "@turf/turf";
 
 function DeckGLOverlay(props: DeckGlMapboxOverlayProps) {
   const overlay = useControl<any>(() => new DeckGlMapboxOverlay(props));
@@ -106,11 +107,12 @@ function classifyFeature(feature): "super station" | "station" | "stop" {
   return "stop";
 }
 
-function featureFromLocation(fromAbove: boolean, location: UserLocation, type) {
+function featureFromLocation(fromAbove: boolean, location: UserLocation, type, name) {
   return {
     type: "Feature",
     properties: {
-      endpoint: type
+      endpoint: type,
+      name: name
     },
     geometry: {
       type: "Point",
@@ -122,11 +124,12 @@ function featureFromLocation(fromAbove: boolean, location: UserLocation, type) {
   };
 }
 
-function featureFromPlace(fromAbove: boolean, place: Place, type) {
+function featureFromPlace(fromAbove: boolean, place: Place, type, name) {
   return {
     type: "Feature",
     properties: {
-      endpoint: type
+      endpoint: type,
+      name: name
     },
     geometry: {
       type: "Point",
@@ -216,6 +219,7 @@ export default function TheLineOverlay({
   const [farOut, setFarOut] = useState<boolean>(false);
   const [fromAbove, setFromAbove] = useState<boolean>(false);
   const [visibleLayer15, setVisibleLayer15] = useState<boolean>(false);
+  const [visibleLayer14, setVisibleLayer14] = useState<boolean>(false);
 
   const tileUrl = `${tilesBaseUrl}/${otp2Layers.join(",")}/tilejson.json`;
 
@@ -242,18 +246,20 @@ export default function TheLineOverlay({
     };
 
     walkLegs.forEach(leg => {
+      console.log(walkLegs)
       extendWithElevationProfile(
         leg.legGeometry.points,
         !fromAbove && leg.legElevation
       ).forEach(geometry => {
         features.push({
           type: "Feature",
-          properties: {},
-          geometry
+          properties: {distance: leg.distance},
+          geometry,
+     
         });
       });
     });
-
+    console.log(result)
     return result;
   }, [
     walkLegs.map(leg => leg.legGeometry.points).join(" "),
@@ -279,10 +285,10 @@ export default function TheLineOverlay({
 
     (itinerary ? itinerary.legs : []).forEach(leg => {
       if (leg !== itinerary.legs[0]) {
-        features.push(featureFromPlace(fromAbove, leg.from, "place"));
+        features.push(featureFromPlace(fromAbove, leg.from, "place",leg.from));
       }
       if (leg !== itinerary.legs[itinerary.legs.length - 1]) {
-        features.push(featureFromPlace(fromAbove, leg.to, "place"));
+        features.push(featureFromPlace(fromAbove, leg.to, "place", leg.to));
       }
     });
 
@@ -310,8 +316,8 @@ export default function TheLineOverlay({
         pickable: false,
         visible: true,
         // getElevation: f => f.properties.height,
-        getFillColor: [38, 41, 45, 255],
-        beforeId: "street-edges"
+        getFillColor: [14, 29, 52, 255],
+        beforeId: "building-top"
       }),
       new GeoJsonLayer({
         id: "hidden-marina",
@@ -322,7 +328,7 @@ export default function TheLineOverlay({
         pickable: false,
         visible: true,
         // getElevation: f => f.properties.height,
-        getFillColor: [38, 41, 45, 255],
+        getFillColor: [14, 29, 52, 255],
         beforeId: "building-top"
       }),
       new GeoJsonLayer({
@@ -373,7 +379,22 @@ export default function TheLineOverlay({
         pickable: false,
         visible: true,
         // getElevation: f => f.properties.height,
-        getFillColor: [225, 225, 225, 164],
+        getFillColor: [225, 225, 225, 104],
+        beforeId: "building-top"
+      }),
+      new GeoJsonLayer({
+        id: "trojena-shape",
+        data: "/trojena.geojson",
+        stroked: true,
+        // extruded: true,
+        filled: true,
+        wireframe: false,
+        getLineColor: [255, 255, 255, 200],
+        getLineWidth: 1,
+        pickable: false,
+        visible: true,
+        // getElevation: f => f.properties.height,
+        getFillColor: [225, 225, 225, 104],
         beforeId: "building-top"
       }),
       new GeoJsonLayer({
@@ -592,6 +613,29 @@ export default function TheLineOverlay({
           fontFamily: "Brown-Regular"
         }
       }),
+      new GeoJsonLayer({
+        id: "names-line",
+        data: "/names_the_line.geojson",
+        minZoom: 9,
+        maxZoom: 22,
+        parameters: {
+          depthTest: false
+        },
+        pickable: false,
+        visible: visibleLayer14,
+        iconMapping,
+        pointType: "text",
+        getText: (feature: { properties: { name: any; }; }) => feature.properties.name,
+        getTextAnchor: "middle",
+        getTextSize: 14,
+        getTextColor: [255, 255, 255, 255],
+        textFontFamily: "Brown-Regular",
+        textFontSettings: {
+          fontSize: 36,
+          sdf: true,
+          fontFamily: "Brown-Regular"
+        }
+      }),
       new TextLayer({
         id: `${id}-biglables` as string,
         data: "../biglabels.json",
@@ -614,6 +658,7 @@ export default function TheLineOverlay({
   }
 
   if (walkGeoJson.features.length) {
+  
     layers.push(
       new PathLayer({
         id: `${id}-walk-legs` as string,
@@ -634,12 +679,20 @@ export default function TheLineOverlay({
         joinRounded: true,
         widthUnits: "pixels",
         dashJustified: true,
-        getColor: [255, 0, 231, 224],
+        getColor:  feature => {
+          if (feature.properties.distance > 300) {
+            return [255, 0, 231, 224];
+          } else {
+            return [255, 255, 231, 224];
+          }
+        },
+       
         getDashArray: [0, 3],
         getWidth: 6,
         getPath: feature => feature.geometry.coordinates
       })
     );
+    
   }
 
   if (itineraryPlaces.features.length) {
@@ -656,7 +709,8 @@ export default function TheLineOverlay({
         parameters: {
           depthTest: false
         },
-
+       // getText: feature => feature.properties.name.name,
+        //getTextSize: 16,
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
         iconMapping,
@@ -746,12 +800,15 @@ export default function TheLineOverlay({
           classifyFeature(feature) === "super station" ? "top" : "top",
         getTextPixelOffset: feature =>
           classifyFeature(feature) === "super station"
-            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 30]
+            ? [0, iconMapping[classifyFeature(feature)].width / 2 + 25]
             : [0, iconMapping[classifyFeature(feature)].width / 2 + 10],
         getTextSize: feature =>
-          classifyFeature(feature) === "super station" ? 18 : 14,
+          classifyFeature(feature) === "super station" ? 16 : 14,
         getTextColor: feature => {
           if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
+            return [0, 0, 0, 0];
+          }
+          if (feature.properties.name === 'LOTL Asset') {
             return [0, 0, 0, 0];
           }
 
@@ -769,6 +826,10 @@ export default function TheLineOverlay({
           if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
           }
+          if (feature.properties.name === 'LOTL Asset') {
+            return [0, 0, 0, 0];
+          }
+
 
           if (feature.properties.gtfsId === hoveredEntityId) {
             return classifyFeature(feature) === "super station"
@@ -784,7 +845,7 @@ export default function TheLineOverlay({
         textBackground: true,
         textFontFamily: "Brown-Regular",
         textFontSettings: {
-          fontSize: 36,
+          fontSize: 34,
           sdf: true,
           fontFamily: "Brown-Regular"
         }
@@ -800,43 +861,57 @@ export default function TheLineOverlay({
 
     if (itinerary) {
       endpointGeoJson.features.push(
-        featureFromPlace(fromAbove, itinerary.legs[0].from, "from")
+        featureFromPlace(fromAbove, itinerary.legs[0].from, "from", itinerary.legs[0].from)
       );
+     
+      
       endpointGeoJson.features.push(
-        featureFromPlace(
-          fromAbove,
-          itinerary.legs[itinerary.legs.length - 1].to,
-          "to"
-        )
+        featureFromPlace(fromAbove,itinerary.legs[itinerary.legs.length - 1].to,"to",itinerary.legs[itinerary.legs.length - 1].to)
       );
+
+    
+      
     } else {
       if (fromLocation) {
-        endpointGeoJson.features.push(
-          featureFromLocation(fromAbove, fromLocation, "from")
-        );
+        endpointGeoJson.features.push(featureFromLocation(fromAbove, fromLocation, "from", fromLocation));
+       
+       
       }
       if (toLocation) {
-        endpointGeoJson.features.push(
-          featureFromLocation(fromAbove, toLocation, "to")
-        );
+        endpointGeoJson.features.push(featureFromLocation(fromAbove, toLocation, "to", toLocation));
       }
+
+    
     }
 
+
+   
+ 
     layers.push(
       new GeoJsonLayer({
         id: `${id}-endpoints` as string,
         data: endpointGeoJson,
-
+        updateTriggers: {
+          getTextColor: [allowClicking],
+          getTextBackgroundColor: [allowClicking]
+        },
         minZoom: 6,
         maxZoom: 19,
         visible: true,
         pickable: true,
 
-        pointType: "icon",
+        pointType: "icon+text",
         parameters: {
           depthTest: false
         },
-
+        getTextSize: 16,
+        getText: feature => feature.properties.name.name.toUpperCase(),
+        getTextColor: feature => allowClicking ? [0, 0, 0, 0] : [0, 0, 0, 255],
+        getTextBackgroundColor: feature => allowClicking ? [255, 255, 255, 0] : [255, 255, 255, 255],
+        textBackgroundPadding: [20, 8, 20, 8],
+        getTextPixelOffset: [0,-55],
+        textBackground: true,
+        textFontFamily: "Brown-Regular",
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
         iconMapping,
@@ -893,6 +968,7 @@ export default function TheLineOverlay({
     setFarOut(viewState.zoom <= 13);
     setFromAbove(viewState.pitch <= 10);
     setVisibleLayer15(viewState.zoom >= 15);
+    setVisibleLayer14(viewState.zoom >= 14);
   }
 
   function getCursor({ isHovering }): string {

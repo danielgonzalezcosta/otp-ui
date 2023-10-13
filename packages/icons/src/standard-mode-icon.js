@@ -1,6 +1,11 @@
 import React from "react";
 
-import { ClassicCar, ClassicFerry, ClassicMicromobility } from "./classic";
+import {
+  ClassicART,
+  ClassicCar,
+  ClassicFerry,
+  ClassicMicromobility
+} from "./classic";
 import {
   StandardBike,
   StandardBus,
@@ -42,6 +47,8 @@ function StandardModeIcon({ mode, ...props }) {
     case "micromobility_rent":
     case "scooter":
       return <ClassicMicromobility {...props} />;
+    case "taxi":
+      return <ClassicART {...props} />;
     case "rail":
       return <StandardRail {...props} />;
     case "subway":

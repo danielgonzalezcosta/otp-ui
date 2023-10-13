@@ -35,7 +35,8 @@ function stopToTransitive(
     // Don't render this stop name if another one or similar exists.
     stop_name: stopNameExists ? null : normalizedStopName,
     stop_lat: stop.lat,
-    stop_lon: stop.lon
+    stop_lon: stop.lon,
+    stop_elevation: stop.elevation
   };
 }
 

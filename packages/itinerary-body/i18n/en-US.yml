@@ -45,8 +45,8 @@ otpUi:
       southeast: southeast
       southwest: southwest
       west: west
-    summary: "Take ART to {place}"
-    summaryAndDistance: "Take ART {distance} to {place}"
+    summary: "{mode} to {place}"
+    summaryAndDistance: "{mode} {distance} to {place}"
     summaryMode:
       bike: Bicycle
       bikeshare: Bikeshare

@@ -27,7 +27,7 @@ export const toSafeRouteColor = (routeColor: string): string => {
 export const toModeColor = (mode: string, routeColor: string): string => {
   switch (mode) {
     case "WALK":
-      return `#e9e9e9`;
+      return `#FFFFFF`;
     case "BICYCLE":
     case "BICYCLE_RENT":
       return `red`;

@@ -1,3 +1,4 @@
+import ClassicART from "./classic-art";
 import ClassicBike from "./classic-bike";
 import ClassicBus from "./classic-bus";
 import ClassicCar from "./classic-car";
@@ -8,6 +9,7 @@ import ClassicTram from "./classic-tram";
 import ClassicWalk from "./classic-walk";
 
 export {
+  ClassicART,
   ClassicBike,
   ClassicBus,
   ClassicCar,

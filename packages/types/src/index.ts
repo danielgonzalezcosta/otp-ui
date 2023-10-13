@@ -568,6 +568,7 @@ export type TransitiveStop = {
   stop_name: string;
   stop_lat: number;
   stop_lon: number;
+  stop_elevation: number;
 };
 
 export type TransitiveStreetEdge = {

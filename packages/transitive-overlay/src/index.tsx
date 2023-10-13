@@ -7,7 +7,8 @@ import {
   Leg,
   TransitiveData,
   TransitiveJourney,
-  TransitivePattern
+  TransitivePattern,
+  TransitivePlace
 } from "@opentripplanner/types";
 import bbox from "@turf/bbox";
 
@@ -33,7 +34,7 @@ const defaultTextPaintParams = {
   "text-halo-blur": 0,
   "text-halo-color": "#ffffff",
   "text-halo-width": 0,
-  "text-color": "#ffffff",
+  "text-color": "#ffffff"
 };
 
 /**
@@ -45,7 +46,7 @@ const commonTextLayoutParams: SymbolLayout = {
   "text-field": ["get", "name"],
   "text-justify": "auto",
   "text-radial-offset": 1,
-  "text-size": 18,
+  "text-size": 18
 };
 
 /**
@@ -98,7 +99,26 @@ const TransitiveCanvasOverlay = ({
 }: Props): JSX.Element => {
   const { current: map } = useMap();
 
-  const placeFeatures = [];
+  const placeFeatures = ((transitiveData && transitiveData.places) || [])
+    .filter(
+      (place: TransitivePlace) =>
+        !place.place_elevation && place.type === "place"
+    )
+    .flatMap((place: TransitivePlace) => {
+      return {
+        type: "Feature",
+        properties: {
+          color: modeColorMap[place.type] || "#008",
+          name: place.place_name,
+          stopId: place.place_stopId,
+          type: place.type || "place"
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [place.place_lon, place.place_lat]
+        }
+      };
+    });
 
   const streetEdgeFeatures = (
     (transitiveData && transitiveData.journeys) ||
@@ -155,6 +175,13 @@ const TransitiveCanvasOverlay = ({
       transitiveData.stops.find(stop => stop.stop_id === pStop.stop_id)
     )
     .filter((value, index, array) => array.indexOf(value) === index)
+    .filter(stop => !stop.stop_elevation)
+    .filter(
+      stop =>
+        !transitiveData.places.find(
+          place => place.place_stopId === stop.stop_id
+        )
+    )
     .map(stop => ({
       type: "Feature",
       properties: { name: stop.stop_name, type: "stop" },
@@ -181,7 +208,7 @@ const TransitiveCanvasOverlay = ({
       ...streetEdgeFeatures,
       ...stopFeatures,
       ...routeFeatures
-    ]
+    ] as any
   };
 
   const zoomToGeoJSON = geoJson => {
@@ -213,42 +240,6 @@ const TransitiveCanvasOverlay = ({
   // (or, if it is text, rendered with a lower priority or not at all if higher-priority text overlaps).
   return (
     <Source data={geojson} id="itinerary" type="geojson">
-      {/* First, render access legs then transit lines so that all lines appear under any text or circle
-          and transit lines appears above access legs. Walking legs are under a separate layer
-          because they use a different line dash that cannot be an expression. */}
-      <Layer
-        // This layer is for other modes - dashed path
-        filter={["all", ["==", "type", "street-edge"], ["!=", "mode", "WALK"]]}
-        id="street-edges"
-        layout={{
-          "line-cap": "butt"
-        }}
-        paint={{
-          // TODO: get from transitive properties
-          "line-color": ["get", "color"],
-          "line-dasharray": [2, 1],
-          // TODO: get from transitive properties
-          "line-width": 4,
-          "line-opacity": 0.9
-        }}
-        type="line"
-      />
-      <Layer
-        filter={routeFilter}
-        id="routes"
-        layout={{
-          "line-join": "round",
-          "line-cap": "round"
-        }}
-        paint={{
-          "line-color": ["get", "color"],
-          // Apply a thinner line (width = 6) for bus routes (route_type = 3), set width to 10 otherwise.
-          "line-width": ["match", ["get", "routeType"], 3, 6, 10],
-          "line-opacity": 1
-        }}
-        type="line"
-      />
-
       {/* Render access leg places (lowest priority) then transit stop and route labels, then origin/destination (highest priority)
           so the text appears above all graphics. */}
       <Layer

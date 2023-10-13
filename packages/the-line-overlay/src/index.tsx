@@ -3,7 +3,7 @@ import {
   Itinerary,
   MapLocationActionArg,
   Place,
-  UserLocation,
+  UserLocation
 } from "@opentripplanner/types";
 // eslint-disable-next-line prettier/prettier
 import React, { useCallback, useMemo, useState } from "react"
@@ -20,7 +20,6 @@ import {
   DeckGlMapboxOverlay,
   DeckGlMapboxOverlayProps
 } from "./deck-gl-mapbox-overlay";
-import { feature } from "@turf/turf";
 
 function DeckGLOverlay(props: DeckGlMapboxOverlayProps) {
   const overlay = useControl<any>(() => new DeckGlMapboxOverlay(props));
@@ -107,34 +106,38 @@ function classifyFeature(feature): "super station" | "station" | "stop" {
   return "stop";
 }
 
-function featureFromLocation(fromAbove: boolean, location: UserLocation, type, name) {
+function featureFromLocation(
+  renderElevation: boolean,
+  location: UserLocation,
+  type
+) {
   return {
     type: "Feature",
     properties: {
       endpoint: type,
-      name: name
+      place: location
     },
     geometry: {
       type: "Point",
       coordinates:
-        !fromAbove && location.elevation
+        renderElevation && location.elevation
           ? [location.lon, location.lat, location.elevation]
           : [location.lon, location.lat]
     }
   };
 }
 
-function featureFromPlace(fromAbove: boolean, place: Place, type, name) {
+function featureFromPlace(renderElevation: boolean, place: Place, type) {
   return {
     type: "Feature",
     properties: {
       endpoint: type,
-      name: name
+      place
     },
     geometry: {
       type: "Point",
       coordinates:
-        !fromAbove && place.elevation
+        renderElevation && place.elevation
           ? [place.lon, place.lat, place.elevation]
           : [place.lon, place.lat]
     }
@@ -184,6 +187,15 @@ function extendWithElevationProfile(points, legElevation) {
   return geometries;
 }
 
+function rgbToArray(rgba: string) {
+  return [
+    parseInt(rgba.slice(0, 2), 16),
+    parseInt(rgba.slice(2, 4), 16),
+    parseInt(rgba.slice(4, 6), 16),
+    rgba.length === 8 ? parseInt(rgba.slice(6, 8), 16) : 255
+  ];
+}
+
 export default function TheLineOverlay({
   id,
   clearLocation,
@@ -217,7 +229,7 @@ export default function TheLineOverlay({
 }): JSX.Element {
   const [hoveredEntityId, setHoveredEntityId] = useState<string>(null);
   const [farOut, setFarOut] = useState<boolean>(false);
-  const [fromAbove, setFromAbove] = useState<boolean>(false);
+  const [renderElevation, setRenderElevation] = useState<boolean>(false);
   const [visibleLayer15, setVisibleLayer15] = useState<boolean>(false);
   const [visibleLayer14, setVisibleLayer14] = useState<boolean>(false);
 
@@ -226,7 +238,6 @@ export default function TheLineOverlay({
   const layers: any[] = [];
 
   const highlightColor: Color = [255, 207, 77];
- 
 
   /* Only allow picking if there isn't an itinerary visible */
   const allowPicking = !itinerary;
@@ -235,8 +246,45 @@ export default function TheLineOverlay({
 
   const showEndpoints = true;
 
+  const transitLegs = itinerary
+    ? itinerary.legs.filter(leg => leg.transitLeg)
+    : [];
+  const transitGeoJson = useMemo(() => {
+    const features = [];
+    const result = {
+      type: "FeatureCollection",
+      features
+    };
+
+    transitLegs.forEach(leg => {
+      extendWithElevationProfile(
+        leg.legGeometry.points,
+        renderElevation && (leg.from.elevation || leg.to.elevation)
+          ? `0,${leg.from.elevation || 0},${leg.distance},${leg.to.elevation ||
+              0}`
+          : null
+      ).forEach(geometry => {
+        features.push({
+          type: "Feature",
+          properties: {
+            routeColor: rgbToArray(leg.routeColor),
+            routeType: leg.routeType
+          },
+          geometry
+        });
+      });
+    });
+
+    return result;
+  }, [
+    transitLegs.map(leg => leg.legGeometry.points).join(" "),
+    transitLegs.map(leg => leg.routeColor).join(" "),
+    transitLegs.map(leg => leg.routeType).join(" "),
+    renderElevation
+  ]);
+
   const walkLegs = itinerary
-    ? itinerary.legs.filter(leg => leg.mode === "WALK")
+    ? itinerary.legs.filter(leg => !leg.transitLeg)
     : [];
   const walkGeoJson = useMemo(() => {
     const features = [];
@@ -246,25 +294,21 @@ export default function TheLineOverlay({
     };
 
     walkLegs.forEach(leg => {
-      console.log(walkLegs)
+      console.log(walkLegs);
       extendWithElevationProfile(
         leg.legGeometry.points,
-        !fromAbove && leg.legElevation
+        renderElevation && leg.legElevation
       ).forEach(geometry => {
         features.push({
           type: "Feature",
-          properties: {distance: leg.distance},
-          geometry,
-     
+          properties: { distance: leg.distance },
+          geometry
         });
       });
     });
-    console.log(result)
+    console.log(result);
     return result;
-  }, [
-    walkLegs.map(leg => leg.legGeometry.points).join(" "),
-    (fromAbove ? [] : walkLegs.map(leg => leg.legElevation)).join(" ")
-  ]);
+  }, [walkLegs.map(leg => leg.legGeometry.points).join(" "), renderElevation]);
 
   const usedStopAndStationIds = new Set();
   if (itinerary) {
@@ -285,10 +329,10 @@ export default function TheLineOverlay({
 
     (itinerary ? itinerary.legs : []).forEach(leg => {
       if (leg !== itinerary.legs[0]) {
-        features.push(featureFromPlace(fromAbove, leg.from, "place",leg.from));
+        features.push(featureFromPlace(renderElevation, leg.from, "place"));
       }
       if (leg !== itinerary.legs[itinerary.legs.length - 1]) {
-        features.push(featureFromPlace(fromAbove, leg.to, "place", leg.to));
+        features.push(featureFromPlace(renderElevation, leg.to, "place"));
       }
     });
 
@@ -299,7 +343,8 @@ export default function TheLineOverlay({
   }, [
     JSON.stringify(
       itinerary ? itinerary.legs.map(leg => [leg.from, leg.to]) : []
-    )
+    ),
+    renderElevation
   ]);
 
   if (showTheLine) {
@@ -401,32 +446,32 @@ export default function TheLineOverlay({
         id: `${id}-geojson-module` as string,
         data: `${dataUrl}?v=1.1` as string,
         updateTriggers: {
-          getElevation: [fromAbove],
+          getElevation: [renderElevation],
           getLineColor: [allowClicking, hoveredEntityId],
-          getFillColor: [allowClicking, fromAbove, hoveredEntityId]
+          getFillColor: [allowClicking, renderElevation, hoveredEntityId]
         },
-        stroked: fromAbove && !farOut,
+        stroked: !renderElevation && !farOut,
         filled: true,
-        extruded: !fromAbove,
-        pickable: allowPicking && (farOut || fromAbove),
+        extruded: renderElevation,
+        pickable: allowPicking && (farOut || !renderElevation),
         lineWidthUnits: "pixels",
-        getElevation: f => (fromAbove ? 0 : f.properties.height),
+        getElevation: f => (!renderElevation ? 0 : f.properties.height),
         getLineColor: [255, 255, 255, 196],
         getLineWidth: 4,
         getFillColor: feature => {
           if (
             allowClicking &&
-            (farOut || fromAbove) &&
+            (farOut || !renderElevation) &&
             feature.properties.gtfsId === hoveredEntityId
           ) {
-            return [...highlightColor, fromAbove ? 255 : 128] as [
+            return [...highlightColor, !renderElevation ? 255 : 128] as [
               number,
               number,
               number,
               number
             ];
           }
-          return fromAbove
+          return !renderElevation
             ? [200, 200, 200, 196]
             : farOut
             ? [220, 220, 220, 64]
@@ -451,7 +496,7 @@ export default function TheLineOverlay({
         wireframe: true,
         pickable: allowPicking,
         extruded: true,
-        visible: !farOut && !fromAbove,
+        visible: !farOut && renderElevation,
         getElevation: f => f.properties.height,
         getLineColor: [255, 255, 255, 196],
         getLineWidth: 4,
@@ -485,7 +530,7 @@ export default function TheLineOverlay({
         },
 
         pickable: true,
-        visible: !fromAbove,
+        visible: renderElevation,
         pointType: "icon+text",
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
@@ -558,7 +603,7 @@ export default function TheLineOverlay({
         },
 
         pickable: true,
-        visible: !fromAbove && visibleLayer15,
+        visible: renderElevation && visibleLayer15,
         pointType: "icon+text",
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
@@ -625,7 +670,8 @@ export default function TheLineOverlay({
         visible: visibleLayer14,
         iconMapping,
         pointType: "text",
-        getText: (feature: { properties: { name: any; }; }) => feature.properties.name,
+        getText: (feature: { properties: { name: any } }) =>
+          feature.properties.name,
         getTextAnchor: "middle",
         getTextSize: 14,
         getTextColor: [255, 255, 255, 255],
@@ -657,8 +703,33 @@ export default function TheLineOverlay({
     );
   }
 
-  if (walkGeoJson.features.length) {
-  
+  if (itinerary) {
+    layers.push(
+      new PathLayer({
+        id: `${id}-transit-legs` as string,
+        data: transitGeoJson.features,
+        parameters: {
+          depthTest: false
+        },
+
+        stroked: true,
+        billboard: true,
+        capRounded: true,
+        joinRounded: true,
+        widthUnits: "pixels",
+        dashJustified: true,
+        getColor: feature => feature.properties.routeColor,
+        getWidth: feature =>
+          feature.properties.routeType === 3 ||
+          feature.properties.routeType === 1600
+            ? 6
+            : 10,
+        getPath: feature => feature.geometry.coordinates
+
+        // beforeId: 'access-leg-labels'
+      })
+    );
+
     layers.push(
       new PathLayer({
         id: `${id}-walk-legs` as string,
@@ -679,20 +750,14 @@ export default function TheLineOverlay({
         joinRounded: true,
         widthUnits: "pixels",
         dashJustified: true,
-        getColor:  feature => {
-          if (feature.properties.distance > 300) {
-            return [255, 0, 231, 224];
-          } else {
-            return [255, 255, 231, 224];
-          }
-        },
-       
+        getColor: [255, 255, 231, 224],
         getDashArray: [0, 3],
         getWidth: 6,
-        getPath: feature => feature.geometry.coordinates
+        getPath: feature => feature.geometry.coordinates,
+
+        beforeId: `${id}-transit-legs`
       })
     );
-    
   }
 
   if (itineraryPlaces.features.length) {
@@ -709,8 +774,8 @@ export default function TheLineOverlay({
         parameters: {
           depthTest: false
         },
-       // getText: feature => feature.properties.name.name,
-        //getTextSize: 16,
+        // getText: feature => feature.properties.place.name,
+        // getTextSize: 16,
         iconBillboard: true,
         iconAtlas: `data:image/svg+xml,${encodeURIComponent(iconAtlas)}`,
         iconMapping,
@@ -808,7 +873,7 @@ export default function TheLineOverlay({
           if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
           }
-          if (feature.properties.name === 'LOTL Asset') {
+          if (feature.properties.name === "LOTL Asset") {
             return [0, 0, 0, 0];
           }
 
@@ -826,10 +891,9 @@ export default function TheLineOverlay({
           if (feature.properties.gtfsId !== hoveredEntityId && opaqueLayer) {
             return [0, 0, 0, 0];
           }
-          if (feature.properties.name === 'LOTL Asset') {
+          if (feature.properties.name === "LOTL Asset") {
             return [0, 0, 0, 0];
           }
-
 
           if (feature.properties.gtfsId === hoveredEntityId) {
             return classifyFeature(feature) === "super station"
@@ -861,32 +925,29 @@ export default function TheLineOverlay({
 
     if (itinerary) {
       endpointGeoJson.features.push(
-        featureFromPlace(fromAbove, itinerary.legs[0].from, "from", itinerary.legs[0].from)
-      );
-     
-      
-      endpointGeoJson.features.push(
-        featureFromPlace(fromAbove,itinerary.legs[itinerary.legs.length - 1].to,"to",itinerary.legs[itinerary.legs.length - 1].to)
+        featureFromPlace(renderElevation, itinerary.legs[0].from, "from")
       );
 
-    
-      
+      endpointGeoJson.features.push(
+        featureFromPlace(
+          renderElevation,
+          itinerary.legs[itinerary.legs.length - 1].to,
+          "to"
+        )
+      );
     } else {
       if (fromLocation) {
-        endpointGeoJson.features.push(featureFromLocation(fromAbove, fromLocation, "from", fromLocation));
-       
-       
+        endpointGeoJson.features.push(
+          featureFromLocation(renderElevation, fromLocation, "from")
+        );
       }
       if (toLocation) {
-        endpointGeoJson.features.push(featureFromLocation(fromAbove, toLocation, "to", toLocation));
+        endpointGeoJson.features.push(
+          featureFromLocation(renderElevation, toLocation, "to")
+        );
       }
-
-    
     }
 
-
-   
- 
     layers.push(
       new GeoJsonLayer({
         id: `${id}-endpoints` as string,
@@ -905,11 +966,12 @@ export default function TheLineOverlay({
           depthTest: false
         },
         getTextSize: 16,
-        getText: feature => feature.properties.name.name.toUpperCase(),
-        getTextColor: feature => allowClicking ? [0, 0, 0, 0] : [0, 0, 0, 255],
-        getTextBackgroundColor: feature => allowClicking ? [255, 255, 255, 0] : [255, 255, 255, 255],
+        getText: feature => feature.properties.place.name.toUpperCase(),
+        getTextColor: () => (allowClicking ? [0, 0, 0, 0] : [0, 0, 0, 255]),
+        getTextBackgroundColor: () =>
+          allowClicking ? [255, 255, 255, 0] : [255, 255, 255, 255],
         textBackgroundPadding: [20, 8, 20, 8],
-        getTextPixelOffset: [0,-55],
+        getTextPixelOffset: [0, -55],
         textBackground: true,
         textFontFamily: "Brown-Regular",
         iconBillboard: true,
@@ -966,7 +1028,7 @@ export default function TheLineOverlay({
 
   function onViewStateChange({ viewState }) {
     setFarOut(viewState.zoom <= 13);
-    setFromAbove(viewState.pitch <= 10);
+    setRenderElevation(viewState.pitch > 10);
     setVisibleLayer15(viewState.zoom >= 15);
     setVisibleLayer14(viewState.zoom >= 14);
   }

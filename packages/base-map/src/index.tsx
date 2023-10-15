@@ -58,7 +58,6 @@ const BaseMap = ({
   children,
   id,
   mapLibreProps,
-  maxZoom,
   onClick,
   onContextMenu,
   onViewportChanged,

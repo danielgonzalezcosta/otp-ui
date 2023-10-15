@@ -8,7 +8,7 @@ const StyledItineraryBody = styled(ItineraryBody)`
 
   *:not(.fa) {
     box-sizing: border-box;
-    font-family: 'Brown-Regular', sans-serif;
+    font-family: "Brown-Regular", sans-serif;
   }
 
   ${ItineraryBodyClasses.InterlineDot} {

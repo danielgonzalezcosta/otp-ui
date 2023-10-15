@@ -247,7 +247,9 @@ export default function TheLineOverlay({
   const showEndpoints = true;
 
   const transitLegs = itinerary
-    ? itinerary.legs.filter(leg => leg.transitLeg)
+    ? itinerary.legs.filter(
+        leg => leg.transitLeg && (leg.from.elevation || leg.to.elevation)
+      )
     : [];
   const transitGeoJson = useMemo(() => {
     const features = [];

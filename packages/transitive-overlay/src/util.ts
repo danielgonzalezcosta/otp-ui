@@ -336,7 +336,10 @@ export function itineraryToTransitive(
       // Add the "from" end of transit legs to the list of stops.
       const fromStop = makeStop(leg.from, hasLegGeometry && legCoords[0]);
       addStop(fromStop, newStops, knownStopNames);
-      pattern.stops.push({ stop_id: leg.from.stopId });
+      pattern.stops.push({
+        stop_id: leg.from.stopId,
+        stop_elevation: leg.from.elevation
+      });
 
       // add intermediate stops to stops dictionary and pattern object
       // If there is no intermediateStopGeometry, do not add the intermediate stops
@@ -351,6 +354,7 @@ export function itineraryToTransitive(
           addStop(stop, newStops, knownStopNames);
           pattern.stops.push({
             stop_id: stop.stopId,
+            stop_elevation: stop.elevation,
             geometry:
               hasIntermediateStopGeometry && leg.interStopGeometry[i].points
           });
@@ -364,6 +368,7 @@ export function itineraryToTransitive(
       addStop(toStop, newStops, knownStopNames);
       pattern.stops.push({
         stop_id: leg.to.stopId,
+        stop_elevation: leg.to.elevation,
         geometry:
           // Some legs don't have intermediateStopGeometry, but do have valid legGeometry
           (hasInterStopGeometry || hasLegGeometry) &&

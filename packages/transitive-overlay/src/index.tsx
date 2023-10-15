@@ -240,6 +240,22 @@ const TransitiveCanvasOverlay = ({
   // (or, if it is text, rendered with a lower priority or not at all if higher-priority text overlaps).
   return (
     <Source data={geojson} id="itinerary" type="geojson">
+      <Layer
+        filter={routeFilter}
+        id="routes"
+        layout={{
+          "line-join": "round",
+          "line-cap": "round"
+        }}
+        paint={{
+          "line-color": ["get", "color"],
+          // Apply a thinner line (width = 6) for bus routes (route_type = 3), set width to 10 otherwise.
+          "line-width": ["match", ["get", "routeType"], 3, 6, 1600, 3, 10],
+          "line-opacity": 1
+        }}
+        type="line"
+      />
+
       {/* Render access leg places (lowest priority) then transit stop and route labels, then origin/destination (highest priority)
           so the text appears above all graphics. */}
       <Layer

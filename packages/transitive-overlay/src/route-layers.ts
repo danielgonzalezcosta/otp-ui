@@ -20,10 +20,9 @@ export function patternToRouteFeature(
   const route = routes.find(r => r.route_id === pattern.route_id);
   // Concatenate geometries (arrays of coordinates) to help maplibre spread out labels (not perfect).
   const concatenatedLines = pattern.stops
-    .map(stop => stop.geometry)
-    .filter(geometry => !!geometry)
-    .reduce((result, geom, index) => {
-      const coords = polyline.decode(geom);
+    .filter(stop => !!stop.geometry && !stop.stop_elevation)
+    .reduce((result, stop, index) => {
+      const coords = polyline.decode(stop.geometry);
       // Remove the first element (except for the first array) because it is a duplicate
       // of the last element of the previous array.
       if (index !== 0) coords.shift();

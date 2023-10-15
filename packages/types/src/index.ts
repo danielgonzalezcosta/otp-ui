@@ -552,6 +552,7 @@ export type TransitivePattern = {
   stops: {
     geometry?: string;
     stop_id: string;
+    stop_elevation?: number;
   }[];
 };
 export type TransitiveRoute = {

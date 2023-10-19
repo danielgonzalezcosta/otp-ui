@@ -250,7 +250,7 @@ const TransitiveCanvasOverlay = ({
         paint={{
           "line-color": ["get", "color"],
           // Apply a thinner line (width = 6) for bus routes (route_type = 3), set width to 10 otherwise.
-          "line-width": ["match", ["get", "routeType"], 3, 6, 1600, 3, 10],
+          "line-width": ["match", ["get", "routeType"], [3, 1600], 6, 10],
           "line-opacity": 1
         }}
         type="line"

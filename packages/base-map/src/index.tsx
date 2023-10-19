@@ -150,6 +150,7 @@ const BaseMap = ({
       onTouchEnd={clearLongPressTimer}
       style={style}
       zoom={viewState.zoom}
+      antialias={true}
     >
       {(toggleableLayers.length > 0 ||
         (!!baseLayer &&

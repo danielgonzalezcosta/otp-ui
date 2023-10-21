@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+  ClassicART,
   ClassicBike,
   ClassicBus,
   ClassicCar,
@@ -28,6 +29,8 @@ function ClassicModeIcon({ mode, ...props }) {
     case "bicycle":
     case "bicycle_rent":
       return <ClassicBike {...props} />;
+    case "taxi":
+      return <ClassicART {...props} />;
     case "bus":
       return <ClassicBus {...props} />;
     case "car":
